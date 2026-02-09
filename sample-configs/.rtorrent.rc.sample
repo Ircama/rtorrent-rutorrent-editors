@@ -1,0 +1,167 @@
+# rtorrent configuration file
+# This is a sample configuration for demonstration and testing
+
+# === Basic Settings ===
+
+# Network port range
+network.port_range.set = 6881-6889
+network.port_random.set = no
+
+# Download directory
+directory.default.set = /var/media/ftp/rtorrent/downloads
+
+# Session directory (for resume data)
+session.path.set = /var/media/ftp/rtorrent/session
+
+# === Connection Settings ===
+
+# Maximum number of simultaneous uploads per torrent
+throttle.max_uploads.set = 100
+
+# Maximum number of simultaneous uploads globally
+throttle.max_uploads.global.set = 250
+
+# Minimum number of peers to connect to per torrent
+throttle.min_peers.normal.set = 20
+
+# Maximum number of peers to connect to per torrent
+throttle.max_peers.normal.set = 60
+
+# Same as above but for seeding completed torrents
+throttle.min_peers.seed.set = 10
+throttle.max_peers.seed.set = 50
+
+# Maximum number of simultaneous downloads
+throttle.max_downloads.global.set = 10
+
+# Maximum number of connections per torrent
+trackers.numwant.set = 80
+
+# === Memory Settings ===
+
+# Maximum memory usage (RAM) for file data
+pieces.memory.max.set = 128M
+
+# Preallocate files - avoids fragmentation
+system.file.allocate.set = yes
+
+# === Web Interface (SCGI) ===
+
+# SCGI port for web interface (ruTorrent, Flood, etc.)
+network.scgi.open_port = 127.0.0.1:16891
+
+# If using UNIX socket instead:
+# network.scgi.open_local = /var/run/rtorrent/rpc.socket
+# schedule2 = scgi_permission,0,0,"execute.nothrow=chmod,\"g+w,o=\",/var/run/rtorrent/rpc.socket"
+
+# === DHT Settings ===
+
+# Enable/disable DHT
+dht.mode.set = auto
+
+# DHT port
+dht.port.set = 6881
+
+# Protocol encryption
+protocol.pex.set = yes
+
+# === Bandwidth Settings ===
+
+# Global download rate in KB/s (0 = unlimited)
+throttle.global_down.max_rate.set_kb = 0
+
+# Global upload rate in KB/s (0 = unlimited)
+throttle.global_up.max_rate.set_kb = 0
+
+# === Scheduling ===
+
+# Watch directory for new torrents
+schedule2 = watch_directory,5,5,"load.start=/var/media/ftp/rtorrent/watch/*.torrent"
+
+# Untied directory for torrents
+schedule2 = untied_directory,5,5,"stop_untied=/var/media/ftp/rtorrent/watch/*.torrent"
+
+# Close torrents when diskspace is low
+schedule2 = monitor_diskspace,15,60,((close_low_diskspace,1000M))
+
+# === Logging ===
+
+# Log executed commands
+log.execute = /var/media/ftp/rtorrent/logs/execute.log
+
+# Log XML-RPC calls
+log.xmlrpc = /var/media/ftp/rtorrent/logs/xmlrpc.log
+
+# === Ratio Control ===
+
+# Stop seeding when ratio reaches 2.0
+method.insert = cfg.ratio.min, value|static, 200
+method.insert = cfg.ratio.max, value|static, 300
+method.insert = cfg.ratio.command, string|static, "d.close=, d.erase="
+
+# Group for ratio control
+method.insert = group.default, simple, "print=\"GROUP: $cat=$group.default.ratio.command=\""
+
+# Stop torrents that reach upload ratio
+method.set_key = event.download.finished, ratio_control, \
+    "branch=\"or={d.ratio>=,d.uploads_max=}\", \
+        ((d.try_close=)), \
+        ((group.default=))"
+
+# === Multi-file priorities ===
+
+# Priority of files (0=off, 1=normal, 2=high)
+# This is just an example - set per-file in your client
+# method.insert = d.priority_set, simple, "d.priority.set=$argument.0="
+
+# === Event Handlers ===
+
+# Run command when download completes
+method.set_key = event.download.finished,notify_complete,"execute={/usr/bin/notify-send,\"Download Complete\",$d.name=}"
+
+# === Hash Checking ===
+
+# Check hash for finished torrents
+pieces.hash.on_completion.set = yes
+
+# === Miscellaneous ===
+
+# Set download list layout style
+# (ui.style.progress: 0=traditional, 1=blocks, 2=%, 3=mixed)
+# ui.style.progress.set = 2
+
+# Encoding (for special characters in filenames)
+encoding.add = UTF-8
+
+# Safe sync (reduce disk wear on USB/flash storage)
+pieces.sync.always_safe.set = no
+pieces.sync.timeout.set = 600
+pieces.sync.timeout_safe.set = 900
+
+# Preload chunks for faster access
+pieces.preload.type.set = 1
+pieces.preload.min_size.set = 262144
+pieces.preload.min_rate.set = 5120
+
+# === Advanced Settings ===
+
+# Allow non-standard HTTP ports
+network.http.capath.set = /etc/ssl/certs
+network.http.ssl_verify_host.set = 0
+network.http.ssl_verify_peer.set = 0
+
+# IP filter (optional, commented out)
+# ipv4_filter.add_address = 192.168.0.0/16,unwanted
+# ipv4_filter.load = /path/to/ipfilter.dat
+
+# Bind to specific interface
+# network.bind_address.set = 192.168.1.100
+# network.bind_address.set = ::
+
+# Max open files
+network.max_open_files.set = 600
+
+# Max open sockets
+network.max_open_sockets.set = 300
+
+# === End of Configuration ===

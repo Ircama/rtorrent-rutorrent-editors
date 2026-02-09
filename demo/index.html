@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>rtorrent/ruTorrent Config Editors - Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+        
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+        }
+        
+        .card p {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .card ul {
+            list-style: none;
+            margin-bottom: 20px;
+        }
+        
+        .card ul li {
+            padding: 8px 0;
+            color: #555;
+        }
+        
+        .card ul li:before {
+            content: "✓ ";
+            color: #667eea;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .info-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .info-card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .info-card pre {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        .info-card code {
+            color: #e83e8c;
+        }
+        
+        footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            padding: 20px;
+        }
+        
+        footer a {
+            color: white;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📝 rtorrent/ruTorrent Config Editors</h1>
+            <p>Live Demo: try the interactive configuration editors online</p>
+        </header>
+        
+        <div class="cards">
+            <div class="card">
+                <h2>🔧 rtorrent Editor</h2>
+                <p>Editor for <code>.rtorrent.rc</code> configuration file</p>
+                <ul>
+                    <li>650+ commands with autocomplete</li>
+                    <li>Keyboard shortcuts</li>
+                </ul>
+                <a href="../rtorrent_config_editor.html?demo=1" class="btn">Try rtorrent Editor</a>
+            </div>
+            
+            <div class="card">
+                <h2>⚙️ ruTorrent Editor</h2>
+                <p>Multi-file editor for ruTorrent configuration</p>
+                <ul>
+                    <li>4 config files (PHP/INI)</li>
+                    <li>180+ parameters documented</li>
+                </ul>
+                <a href="../rutorrent_config_editor.html?demo=1" class="btn">Try ruTorrent Editor</a>
+            </div>
+        </div>
+        
+        <div class="info-card">
+            <h3>🚀 Features</h3>
+            <ul style="list-style: none">
+                <li>✨ Customized [ACE](https://ace.c9.io/) Editor</li>
+                <li>🌍 Multi-language UI (English, Italian, German, French, Spanish)</li>
+                <li>🎨 Syntax highlighting and code completion</li>
+                <li>💡 Comprehensive tooltips for all configuration parameters</li>
+                <li>✓ Validation with real-time error detection</li>
+                <li>📜 History management with restore capability</li>
+                <li>💾 Auto-save feature to browser localStorage</li>
+                <li>⌨️ Keyboard shortcuts (Ctrl+S, F3, F4, Shift+F3, Enter/ESC in modals)</li>
+                <li>📱 Mobile responsive</li>
+                <li>🎯 Context menus with snippets and templates</li>
+                <li>🔍 Find & replace</li>
+                <li>🖨️ Print support</li>
+            </ul>
+        </div>
+        
+        <div class="info-card" style="margin-top: 30px;">
+            <h3>📦 Installation</h3>
+            <pre><code>git clone https://github.com/yourusername/rtorrent-rutorrent-editors.git
+cd rtorrent-rutorrent-editors</code></pre>
+            
+            <h3 style="margin-top: 20px;">🔧 Quick Setup</h3>
+            <p>1. Copy HTML files to your web server</p>
+            <p>2. Implement backend (see <code>examples/</code> directory)</p>
+            <p>3. Configure <code>CONFIG</code> section in HTML files</p>
+            <p>4. Access via browser!</p>
+            
+            <h3 style="margin-top: 20px;">📚 Documentation</h3>
+            <p>Full documentation available in <a href="https://github.com/yourusername/rtorrent-rutorrent-editors" style="color: #667eea;">README.md</a></p>
+            <ul style="list-style: none; margin-top: 10px;">
+                <li>• Backend implementation examples (Flask, FastAPI, CGI)</li>
+                <li>• CONFIG section customization</li>
+                <li>• Security best practices</li>
+                <li>• Integration checklist</li>
+                <li>• Troubleshooting guide</li>
+            </ul>
+        </div>
+        
+        <footer>
+            <p><a href="https://github.com/yourusername/rtorrent-rutorrent-editors">View on GitHub</a></p>
+        </footer>
+    </div>
+</body>
+</html>

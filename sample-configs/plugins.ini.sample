@@ -1,0 +1,258 @@
+; ruTorrent Plugins Configuration (plugins.ini)
+; This file controls which plugins are enabled/disabled
+; Sample configuration for demonstration and testing
+
+[default]
+; Default settings for all plugins
+enabled = yes
+canChangeToolbar = yes
+canChangeMenu = yes
+canChangeOptions = yes
+canChangeTabs = yes
+canChangeColumns = yes
+canChangeStatusBar = yes
+canChangeCategory = yes
+canBeShutdowned = yes
+
+; === Core Plugins (required) ===
+
+[_task]
+; Task manager (internal plugin)
+enabled = yes
+
+[_getdir]
+; Directory browser (internal plugin)
+enabled = yes
+
+[_noty]
+; Notification system (internal plugin)
+enabled = yes
+
+; === Essential Plugins ===
+
+[autotools]
+; Automation tools (auto-label, auto-move, etc.)
+enabled = yes
+
+[chunks]
+; Display chunk visualization
+enabled = yes
+
+[data]
+; Data directory management
+enabled = yes
+
+[datadir]
+; Advanced data directory features
+enabled = yes
+
+[diskspace]
+; Disk space display
+enabled = yes
+
+[erasedata]
+; Secure data deletion
+enabled = yes
+
+[edit]
+; Edit torrent properties
+enabled = yes
+
+[extsearch]
+; External torrent search
+enabled = no
+; If enabled, configure search engines:
+; searchEngines = "PirateBay,KickAssTorrents,1337x"
+
+[filedrop]
+; Drag & drop torrent files
+enabled = yes
+
+[files]
+; File list display
+enabled = yes
+
+[geoip]
+; GeoIP peer location
+enabled = yes
+; Requires GeoIP database in share/geoip/
+
+[ratio]
+; Ratio control and groups
+enabled = yes
+
+[rss]
+; RSS feed reader and auto-download
+enabled = yes
+
+[rssurlrewrite]
+; RSS URL rewriting for trackers
+enabled = yes
+
+[screenshots]
+; Screenshot capture
+enabled = no
+
+[scheduler]
+; Bandwidth scheduler
+enabled = yes
+
+[seedingtime]
+; Track seeding time
+enabled = yes
+
+[source]
+; View/edit .torrent source
+enabled = yes
+
+[throttle]
+; Global throttle control
+enabled = yes
+
+[tracklabels]
+; Automatic labeling by tracker
+enabled = yes
+
+[trafic]
+; Traffic monitoring
+enabled = yes
+
+[unpack]
+; Auto-unpack archives
+enabled = yes
+
+; === Optional Plugins ===
+
+[history]
+; History of added/removed torrents
+enabled = no
+
+[loginmgr]
+; Multi-user authentication
+enabled = no
+
+[retrackers]
+; Add additional trackers automatically
+enabled = no
+
+[cookies]
+; Cookie management for tracker authentication
+enabled = no
+
+[cpuload]
+; Display CPU load
+enabled = no
+
+[create]
+; Create new torrents
+enabled = yes
+
+[darkpal]
+; Dark color palette
+enabled = no
+
+[spectrogram]
+; Audio spectrogram preview
+enabled = no
+
+[theme]
+; Theme manager
+enabled = yes
+
+[httprpc]
+; HTTP RPC access
+enabled = no
+
+[mediainfo]
+; Display media file information
+enabled = no
+
+[mediastream]
+; Stream media files
+enabled = no
+
+[mobile]
+; Mobile-optimized interface
+enabled = no
+
+[pausewebui]
+; Pause web UI updates
+enabled = yes
+
+[rpc]
+; RPC management
+enabled = no
+
+[rutracker_check]
+; Check torrent status on RuTracker
+enabled = no
+
+[show_peers_like_wtorrent]
+; Alternative peer display
+enabled = no
+
+[titlebar]
+; Custom titlebar
+enabled = yes
+
+[xmpp]
+; XMPP notifications
+enabled = no
+
+[ipad]
+; iPad-optimized interface
+enabled = no
+
+[feeds]
+; RSS feed aggregator
+enabled = no
+
+[notifications]
+; Desktop notifications
+enabled = yes
+
+[check_port]
+; Check if port is open
+enabled = yes
+
+[_cloudflare]
+; Cloudflare protection bypass
+enabled = no
+
+[logoff]
+; Logout button
+enabled = no
+
+; === Plugin-Specific Settings ===
+
+[autotools.settings]
+; Auto-move completed torrents
+autotools.automove.enabled = yes
+; Auto-label by tracker
+autotools.autolabel.enabled = yes
+
+[scheduler.settings]
+; Update interval in seconds
+scheduler.interval = 60
+
+[rss.settings]
+; RSS update interval in seconds
+rss.interval = 600
+; Maximum items per feed
+rss.maxItems = 100
+
+[unpack.settings]
+; Add .unpack suffix to unpacking torrents
+unpack.addName = yes
+; Path to unrar binary
+unpack.unrarPath = /usr/bin/unrar
+
+[create.settings]
+; Default tracker for created torrents
+; create.defaultTracker = "udp://tracker.example.com:6969/announce"
+
+[throttle.settings]
+; Remember throttle state
+throttle.remember = yes
+
+; === End of Configuration ===

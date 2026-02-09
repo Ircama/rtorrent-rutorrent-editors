@@ -1,0 +1,188 @@
+<?php
+/**
+ * ruTorrent Configuration File (config.php)
+ * This is a sample configuration for demonstration and testing
+ */
+
+// === HTTP Client Settings ===
+
+// User agent string for HTTP requests
+$httpUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+
+// HTTP request timeout in seconds
+$httpTimeOut = 30;
+
+// Use gzip compression for HTTP requests
+$httpUseGzip = true;
+
+// Bind to specific IP for outgoing connections (null = default)
+$httpIP = null;
+
+// SSL certificate verification (useful for self-signed certs)
+$httpSSLVerify = true;
+
+// === RPC Settings ===
+
+// RPC timeout in seconds
+$rpcTimeOut = 5;
+
+// Log all RPC calls (for debugging)
+$rpcLogCalls = false;
+
+// Log RPC faults/errors
+$rpcLogFaults = true;
+
+// === SCGI Connection ===
+
+// SCGI port (must match rtorrent's network.scgi.open_port)
+$scgi_port = 16891;
+$scgi_host = "127.0.0.1";
+
+// For UNIX socket connection (comment out TCP settings above if using this):
+// $scgi_port = 0;
+// $scgi_host = "unix:///var/run/rtorrent/rpc.socket";
+
+// === File Upload Settings ===
+
+// Save uploaded torrent files
+$saveUploadedTorrents = true;
+
+// Overwrite existing torrent files
+$overwriteUploadedTorrents = false;
+
+// === Directory Settings ===
+
+// Top directory - users can't browse above this
+$topDirectory = '/';
+
+// Restrict browsing to specific directory
+// $topDirectory = '/var/media/ftp';
+
+// Temporary directory for operations
+$tempDirectory = null;  // null = system temp
+
+// === Logging ===
+
+// PHP error log file
+$log_file = '/tmp/errors.log';
+
+// Enable detailed diagnostics
+$do_diagnostic = true;
+
+// Alert-level diagnostics
+$al_diagnostic = true;
+
+// === Performance ===
+
+// Cache plugin loading (faster startup)
+$cachedPluginLoading = false;
+
+// Minify JavaScript for plugins
+$pluginMinification = true;
+
+// Update cache in seconds (0 = every request)
+$cacheUpdateInterval = 10;
+
+// === Security ===
+
+// Enable CSRF protection
+$enableCSRFCheck = false;
+
+// If CSRF enabled, set allowed origins:
+// $enabledOrigins = array('https://yourdomain.com');
+
+// Authentication (basic, not recommended without HTTPS)
+// $auth = array(
+//     'username' => array(
+//         'bobby' => 'password_hash_here',
+//         'alice' => 'another_hash'
+//     )
+// );
+
+// === Profile Settings ===
+
+// Path to user profiles (settings/themes)
+$profilePath = '../../share';
+
+// Profile directory permissions
+$profileMask = 0777;
+
+// === Localization ===
+
+// Character encoding
+$locale = 'UTF8';
+
+// === Web UI Settings ===
+
+// Directory for web interface files
+$webDirectory = '/rutorrent';
+
+// Theme directory
+$defaultTheme = 'Default';
+
+// === Plugin Settings ===
+
+// Disable specific plugins
+// $disabledPlugins = array('_cloudflare', 'httprpc');
+
+// === Scheduler Settings (if scheduler plugin enabled) ===
+
+// $schedulerDefaultInterval = 60;  // seconds
+
+// === RSS Settings (if RSS plugin enabled) ===
+
+// $rssUpdateInterval = 600;  // seconds
+
+// === Disk Space Settings ===
+
+// Show disk space warnings
+$diskSpaceAlways = true;
+
+// === Tracker Settings ===
+
+// External tracker announce timeout
+$trackerTimeout = 30;
+
+// === Ratio Control Settings ===
+
+// Default ratio limits (if ratio plugin enabled)
+// $defaultRatioMin = 100;  // 1.0
+// $defaultRatioMax = 200;  // 2.0
+
+// === Advanced Settings ===
+
+// Max upload chunk size for large files (bytes)
+$maxUploadSize = 10485760;  // 10MB
+
+// Time format for display
+$timeFormat = 'H:i:s d/m/Y';
+
+// Enable debug mode
+$debugMode = false;
+
+// === Custom Handlers ===
+
+// Custom PHP handlers for specific actions
+// $customHandlers = array(
+//     'action' => 'handler_function'
+// );
+
+// === Database Settings (if using database plugins) ===
+
+// $dbHost = 'localhost';
+// $dbPort = 3306;
+// $dbName = 'rutorrent';
+// $dbUser = 'rutorrent_user';
+// $dbPass = 'password';
+
+// === Email Notifications (if email plugin enabled) ===
+
+// $emailFrom = 'rutorrent@example.com';
+// $emailSMTPHost = 'smtp.example.com';
+// $emailSMTPPort = 587;
+// $emailSMTPAuth = true;
+// $emailSMTPUser = 'user@example.com';
+// $emailSMTPPass = 'password';
+
+// === End of Configuration ===
+?>

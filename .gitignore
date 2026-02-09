@@ -1,0 +1,58 @@
+# Editor backup files
+*.bak
+*.backup
+*~
+*.swp
+*.swo
+.*.swp
+.*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+temp/
+tmp/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Configuration files with sensitive data
+# (if you store actual configs for testing)
+# config.php
+# access.ini
+# plugins.ini
+# .rtorrent.rc
+
+# Git
+*.orig

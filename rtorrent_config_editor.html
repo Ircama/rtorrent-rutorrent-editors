@@ -1,0 +1,2749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>rtorrent Configuration Editor</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        .toolbar {
+            background: #252526;
+            padding: 10px 20px;
+            border-bottom: 1px solid #3e3e42;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .toolbar h1 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 500;
+        }
+        
+        .toolbar-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        select {
+            background: #3c3c3c;
+            color: #d4d4d4;
+            border: 1px solid #3e3e42;
+            padding: 6px 10px;
+            border-radius: 3px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        
+        button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+        
+        button:hover {
+            background: #1177bb;
+        }
+        
+        button.secondary {
+            background: #3c3c3c;
+        }
+        
+        button.secondary:hover {
+            background: #505050;
+        }
+        
+        .context-menu {
+            position: fixed;
+            background: #2d2d30;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            padding: 2px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            z-index: 1000;
+            display: none;
+            min-width: 180px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .context-menu-item {
+            padding: 4px 12px;
+            cursor: pointer;
+            color: #cccccc;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        
+        .context-menu-item:hover {
+            background: #094771;
+        }
+        
+        .context-menu-separator {
+            height: 1px;
+            background: #3e3e42;
+            margin: 2px 0;
+        }
+        
+        .context-menu-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .context-menu-item.disabled:hover {
+            background: transparent;
+        }
+        
+        #editor {
+            flex: 1;
+            width: 100%;
+            opacity: 0;
+            transition: opacity 0.3s ease-in;
+        }
+        
+        #editor.loaded {
+            opacity: 1;
+        }
+        
+        .status-bar {
+            background: #007acc;
+            color: white;
+            padding: 5px 20px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #323233;
+            color: #d4d4d4;
+            padding: 12px 20px;
+            border-radius: 4px;
+            border-left: 4px solid #007acc;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            z-index: 2000;
+            display: none;
+            max-width: 500px;
+            max-height: 60vh;
+            overflow-y: auto;
+            animation: slideIn 0.3s ease-out;
+            white-space: pre-line;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            line-height: 1.6;
+        }
+        
+        .toast.error {
+            border-left-color: #c72e0f;
+        }
+        
+        .toast.success {
+            border-left-color: #16825d;
+        }
+        
+        .toast.warning {
+            border-left-color: #e5a50a;
+        }
+        
+        .tooltip {
+            position: fixed;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border: 1px solid #007acc;
+            border-radius: 4px;
+            padding: 12px;
+            max-width: 400px;
+            z-index: 3000;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        
+        .tooltip-title {
+            color: #4ec9b0;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        
+        .tooltip-description {
+            margin-bottom: 8px;
+            color: #cccccc;
+        }
+        
+        .tooltip-syntax {
+            background: #252526;
+            padding: 6px 8px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            margin: 6px 0;
+            color: #ce9178;
+        }
+        
+        .tooltip-values {
+            margin-top: 6px;
+            font-size: 11px;
+            color: #9cdcfe;
+        }
+        
+        .tooltip-link {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #3e3e42;
+            font-size: 11px;
+        }
+        
+        .tooltip-link a {
+            color: #3794ff;
+            text-decoration: none;
+        }
+        
+        .tooltip-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            z-index: 4000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: #252526;
+            border: 1px solid #3e3e42;
+            border-radius: 6px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #3e3e42;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: #d4d4d4;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-close:hover {
+            background: #3e3e42;
+            border-radius: 3px;
+        }
+        
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .version-item {
+            background: #1e1e1e;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .version-item:hover {
+            background: #2d2d30;
+            border-color: #007acc;
+        }
+        
+        .version-item.current {
+            border-color: #16825d;
+            background: #1a3a2e;
+        }
+        
+        .version-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        
+        .version-date {
+            font-size: 13px;
+            color: #4ec9b0;
+            font-weight: 500;
+        }
+        
+        .version-size {
+            font-size: 11px;
+            color: #858585;
+        }
+        
+        .version-preview {
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: #cccccc;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 6px;
+            opacity: 0.7;
+        }
+        
+        .version-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .version-actions button {
+            padding: 4px 10px;
+            font-size: 11px;
+        }
+        
+        .auto-save-indicator {
+            position: fixed;
+            bottom: 60px;
+            right: 20px;
+            background: #323233;
+            color: #4ec9b0;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            z-index: 1500;
+            display: none;
+            border-left: 3px solid #4ec9b0;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* ACE Editor: Make selection visible over markers/annotations */
+        .ace_marker-layer .ace_selection {
+            z-index: 100 !important;
+            background: rgba(38, 79, 120, 0.7) !important;
+        }
+        
+        /* Ensure active line is visible but not intrusive */
+        .ace_marker-layer .ace_active-line {
+            z-index: 2 !important;
+            background: rgba(255, 255, 255, 0.05) !important;
+        }
+        
+        /* Keep selection layer above annotation layers */
+        .ace_layer.ace_marker-layer {
+            z-index: 3 !important;
+        }
+        
+        /* Responsive design for small viewports */
+        @media (max-width: 1200px) {
+            .toolbar {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            
+            .toolbar h1 {
+                font-size: 16px;
+                flex-basis: 100%;
+                margin-bottom: 5px;
+            }
+            
+            .toolbar-actions {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            
+            button {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            
+            select {
+                padding: 5px 8px;
+                font-size: 12px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .toolbar {
+                padding: 8px 10px;
+            }
+            
+            .toolbar h1 {
+                font-size: 14px;
+            }
+            
+            .toolbar-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+            
+            button {
+                padding: 5px 10px;
+                font-size: 11px;
+                flex: 1 1 auto;
+                min-width: fit-content;
+            }
+            
+            button.secondary {
+                flex: 0 1 auto;
+            }
+            
+            select {
+                padding: 5px 8px;
+                font-size: 11px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .toolbar h1 {
+                font-size: 13px;
+            }
+            
+            button {
+                padding: 5px 8px;
+                font-size: 10px;
+                white-space: nowrap;
+            }
+            
+            .toolbar-actions {
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="toolbar">
+            <h1 id="toolbarTitle">📁 rtorrent Configuration Editor</h1>
+            <div class="toolbar-actions">
+                <select id="langSelector" onchange="changeLanguage(this.value)">
+                    <option value="auto">🌐 Auto</option>
+                    <option value="en">English</option>
+                    <option value="it">Italiano</option>
+                    <option value="de">Deutsch</option>
+                    <option value="fr">Français</option>
+                    <option value="es">Español</option>
+                </select>
+                <button class="secondary" onclick="loadTemplate()" id="btnLoadTemplate">📄 Load Template</button>
+                <button class="secondary" onclick="loadFileFromServer()" id="btnReload">🔄 Reload</button>
+                <button class="secondary" onclick="document.getElementById('fileInput').click()" id="btnLoadFile">📂 Load from File</button>
+                <button onclick="saveFileToServer()" id="btnSave">💾 Save</button>
+                <button class="secondary" onclick="downloadConfig()" id="btnDownload">💾 Download</button>
+                <button class="secondary" onclick="validateConfig()" id="btnValidate">✓ Validate</button>
+                <button class="secondary" onclick="showVersionHistory()" id="btnHistory">🕐 History</button>
+                <button class="secondary" onclick="restoreAutoSave()" id="btnRestore" style="display:none">↩️ Restore</button>
+            </div>
+            <input type="file" id="fileInput" accept=".rc,.rtorrent.rc,*" style="display:none" onchange="loadFromFile(event)">
+        </div>
+        
+        <div id="editor"></div>
+        
+        <div class="status-bar">
+            <span id="status">Ready</span>
+            <span id="line-info">Line 1, Col 1</span>
+        </div>
+        
+        <div id="contextMenu" class="context-menu">
+            <div class="context-menu-item" onclick="editor.execCommand('copy')">
+                📋 <span data-i18n="ctxCopy">Copy</span>
+            </div>
+            <div class="context-menu-item" onclick="editor.execCommand('cut')">
+                ✂️ <span data-i18n="ctxCut">Cut</span>
+            </div>
+            <div class="context-menu-item" onclick="editor.execCommand('paste')">
+                📄 <span data-i18n="ctxPaste">Paste</span>
+            </div>
+            <div class="context-menu-separator"></div>
+            <div class="context-menu-item" onclick="insertSnippet('watch')">
+                📁 <span data-i18n="ctxWatch">Add Watch Directory</span>
+            </div>
+            <div class="context-menu-item" onclick="insertSnippet('schedule')">
+                ⏰ <span data-i18n="ctxSchedule">Add Schedule</span>
+            </div>
+            <div class="context-menu-item" onclick="insertSnippet('ratio')">
+                📊 <span data-i18n="ctxRatio">Add Ratio Group</span>
+            </div>
+            <div class="context-menu-item" onclick="insertSnippet('print')">
+                💬 <span data-i18n="ctxPrint">Add Print Statement</span>
+            </div>
+            <div class="context-menu-separator"></div>
+            <div class="context-menu-item" onclick="insertSnippet('logging')">
+                📝 <span data-i18n="ctxLogging">Configure Logging</span>
+            </div>
+            <div class="context-menu-item" onclick="insertSnippet('bandwidth')">
+                🌐 <span data-i18n="ctxBandwidth">Bandwidth Limits</span>
+            </div>
+            <div class="context-menu-item" onclick="insertSnippet('scgi')">
+                🔌 <span data-i18n="ctxScgi">Setup SCGI/XMLRPC</span>
+            </div>
+            <div class="context-menu-separator"></div>
+            <div class="context-menu-item" onclick="insertSnippet('method')">
+                🔧 <span data-i18n="ctxMethod">Define Method</span>
+            </div>
+            <div class="context-menu-item" onclick="insertSnippet('event')">
+                ⚡ <span data-i18n="ctxEvent">Event Handler</span>
+            </div>
+            <div class="context-menu-separator"></div>
+            <div class="context-menu-item" onclick="commentSelection()">
+                💬 <span data-i18n="ctxComment">Comment Selection</span>
+            </div>
+            <div class="context-menu-item" onclick="uncommentSelection()">
+                🗨️ <span data-i18n="ctxUncomment">Uncomment Selection</span>
+            </div>
+            <div class="context-menu-separator"></div>
+            <div class="context-menu-item" onclick="printEditor()">
+                🖨️ <span data-i18n="ctxPrintDoc">Print Document</span>
+            </div>
+            <div class="context-menu-item" onclick="lookupSelection()">
+                🔍 <span data-i18n="ctxLookup">Lookup Selection</span>
+            </div>
+        </div>
+        
+        <div id="tooltip" class="tooltip"></div>
+        <div id="toast" class="toast"></div>
+        <div id="autoSaveIndicator" class="auto-save-indicator">💾 Auto-saved</div>
+        
+        <div id="historyModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="historyModalTitle">📜 Version History</h2>
+                    <button class="modal-close" onclick="closeHistoryModal()">×</button>
+                </div>
+                <div class="modal-body" id="historyModalBody">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+        
+        <div id="confirmModal" class="modal">
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h2 id="confirmModalTitle">⚠️ Confirm</h2>
+                    <button class="modal-close" onclick="closeConfirmModal(false)">×</button>
+                </div>
+                <div class="modal-body" id="confirmModalBody" style="padding: 30px 20px;">
+                    <!-- Populated dynamically -->
+                </div>
+                <div style="padding: 0 20px 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                    <button class="secondary" onclick="closeConfirmModal(false)" id="btnConfirmCancel">Cancel</button>
+                    <button onclick="closeConfirmModal(true)" id="btnConfirmOk">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.4/ace.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.4/ext-language_tools.js"></script>
+    <script>
+        // ========================================
+        // CONFIGURATION SECTION
+        // ========================================
+        // Centralized configuration for paths, AJAX endpoints, and options
+        
+        const CONFIG = {
+            // File paths
+            paths: {
+                templateFile: '/mod/etc/default.rtorrent/rtorrent.rc.template',
+                defaultFile: '.rtorrent.rc',
+                acceptedExtensions: '.rc,.rtorrent.rc,*'
+            },
+            
+            // AJAX configuration
+            ajax: {
+                cgiUrl: '/cgi-bin/conf/rtorrent',
+                ajaxParam: 'ajax',
+                ajaxValue: '1',
+                actions: {
+                    readFile: 'read_file',
+                    writeFile: 'write_file'
+                },
+                responseMarker: 'Content-Type: application/json'
+            },
+            
+            // Editor options
+            editor: {
+                theme: 'ace/theme/monokai',
+                mode: 'ace/mode/sh',
+                fontSize: '14px',
+                tabSize: 4,
+                showPrintMargin: false,
+                enableBasicAutocompletion: true,
+                enableLiveAutocompletion: true,
+                enableSnippets: true
+            },
+            
+            // Auto-save configuration
+            autoSave: {
+                enabled: true,
+                intervalMs: 30000,  // 30 seconds
+                storageKey: 'rtorrent_config_autosave'
+            },
+            
+            // Validation options
+            validation: {
+                enabled: true,
+                checkOnType: false,
+                checkOnSave: false
+            }
+        };
+        
+        // ========================================
+        // UTILITY FUNCTIONS
+        // ========================================
+        
+        // Parse JSON response from CGI (extracts JSON from HTML wrapper)
+        function parseAjaxResponse(text) {
+            const marker = CONFIG.ajax.responseMarker;
+            const markerPos = text.indexOf(marker);
+            
+            if (markerPos === -1) {
+                throw new Error(`Marker "${marker}" not found in response`);
+            }
+            
+            const searchStart = markerPos + marker.length;
+            const firstBrace = text.indexOf('{', searchStart);
+            
+            if (firstBrace === -1) {
+                throw new Error('No JSON object found after marker');
+            }
+            
+            let braceCount = 0;
+            let jsonEnd = -1;
+            
+            for (let i = firstBrace; i < text.length; i++) {
+                if (text[i] === '{') braceCount++;
+                else if (text[i] === '}') {
+                    braceCount--;
+                    if (braceCount === 0) {
+                        jsonEnd = i + 1;
+                        break;
+                    }
+                }
+            }
+            
+            if (jsonEnd === -1) {
+                throw new Error('Incomplete JSON in response');
+            }
+            
+            const jsonText = text.substring(firstBrace, jsonEnd);
+            return JSON.parse(jsonText);
+        }
+        
+        // Make AJAX request to CGI
+        async function ajaxRequest(action, params = {}) {
+            const url = CONFIG.ajax.cgiUrl;
+            const urlParams = new URLSearchParams({
+                [CONFIG.ajax.ajaxParam]: CONFIG.ajax.ajaxValue,
+                action: action,
+                ...params
+            });
+            
+            const response = await fetch(`${url}?${urlParams.toString()}`);
+            const text = await response.text();
+            
+            return parseAjaxResponse(text);
+        }
+        
+        // Read file from server
+        async function readFileFromServer(filePath) {
+            return await ajaxRequest(CONFIG.ajax.actions.readFile, { file: filePath });
+        }
+        
+        // Write file to server
+        async function writeFileToServer(filePath, content) {
+            return await ajaxRequest(CONFIG.ajax.actions.writeFile, {
+                file: filePath,
+                content: content
+            });
+        }
+        
+        // ========================================
+        // TRANSLATIONS
+        // ========================================
+        const translations = {
+            en: {
+                toolbarTitle: "📁 rtorrent Configuration Editor",
+                btnLoadTemplate: "📄 Load Template",
+                btnReload: "🔄 Reload",
+                btnLoadFile: "📂 Load from File",
+                btnSave: "💾 Save",
+                btnDownload: "💾 Download",
+                btnValidate: "✓ Validate",
+                btnHistory: "🕐 History",
+                btnRestore: "↩️ Restore",
+                tooltipLoadTemplate: "Load a pre-configured rtorrent template to start with",
+                tooltipReload: "Reload the current configuration file from the server",
+                tooltipLoadFile: "Load a configuration file from your local computer",
+                tooltipSave: "Save the current configuration to the server",
+                tooltipDownload: "Download the configuration file to your computer",
+                tooltipValidate: "Check the configuration for syntax errors and warnings",
+                tooltipHistory: "View and restore previous saved versions",
+                tooltipRestore: "Restore the auto-saved version from browser storage",
+                tooltipLangSelector: "Change the interface language",
+                statusReady: "Ready",
+                statusLoaded: "Template loaded ✓",
+                statusFileLoaded: "File loaded ✓",
+                statusDownloaded: "File downloaded ✓",
+                statusValidOk: "Validation OK ✓",
+                statusValidErr: "error(s) found",
+                statusErrLoad: "Error loading file",
+                lineCol: "Line",
+                ctxCopy: "Copy",
+                ctxCut: "Cut",
+                ctxPaste: "Paste",
+                ctxWatch: "Add Watch Directory",
+                ctxSchedule: "Add Schedule",
+                ctxRatio: "Add Ratio Group",
+                ctxPrint: "Add Print Statement",
+                ctxLogging: "Configure Logging",
+                ctxBandwidth: "Bandwidth Limits",
+                ctxScgi: "Setup SCGI/XMLRPC",
+                ctxMethod: "Define Method",
+                ctxEvent: "Event Handler",
+                ctxComment: "Comment Selection",
+                ctxUncomment: "Uncomment Selection",
+                ctxPrintDoc: "Print Document",
+                ctxLookup: "Lookup Selection",
+                validErrMsg: "command is missing the '=' operator",
+                historyTitle: "📜 Version History",
+                historyEmpty: "No saved versions yet",
+                historyCurrent: "Current",
+                historyRestore: "Restore",
+                historyDelete: "Delete",
+                historyRestoreConfirm: "Restore this version?",
+                historyDeleteConfirm: "Delete this version?",
+                historyRestored: "Version restored",
+                historyDeleted: "Version deleted",
+                autoSaveRestored: "Auto-save restored",
+                autoSaveAvailable: "Auto-saved version available",
+                confirmLoadTemplate: "Replace the current configuration with the template? Any unsaved changes will be lost.",
+                confirmReload: "Reload the configuration file from the server? Any unsaved changes will be lost.",
+                confirmSave: "Save the current configuration to the server? This will overwrite the existing configuration file.",
+                confirmTitle: "Confirm Action",
+                btnCancel: "Cancel",
+                btnOk: "OK"
+            },
+            it: {
+                toolbarTitle: "📁 Editor Configurazione rtorrent",
+                btnLoadTemplate: "📄 Carica Template",
+                btnReload: "🔄 Ricarica",
+                btnLoadFile: "📂 Carica da File",
+                btnSave: "💾 Salva",
+                btnDownload: "💾 Scarica",
+                btnValidate: "✓ Valida",
+                btnHistory: "🕐 Cronologia",
+                btnRestore: "↩️ Ripristina",
+                tooltipLoadTemplate: "Carica un template pre-configurato di rtorrent per iniziare",
+                tooltipReload: "Ricarica il file di configurazione corrente dal server",
+                tooltipLoadFile: "Carica un file di configurazione dal tuo computer locale",
+                tooltipSave: "Salva la configurazione corrente sul server",
+                tooltipDownload: "Scarica il file di configurazione sul tuo computer",
+                tooltipValidate: "Controlla la configurazione per errori di sintassi e avvisi",
+                tooltipHistory: "Visualizza e ripristina versioni salvate precedentemente",
+                tooltipRestore: "Ripristina la versione salvata automaticamente dalla memoria del browser",
+                tooltipLangSelector: "Cambia la lingua dell'interfaccia",
+                statusReady: "Pronto",
+                statusLoaded: "Template caricato ✓",
+                statusFileLoaded: "File caricato ✓",
+                statusDownloaded: "File scaricato ✓",
+                statusValidOk: "Validazione OK ✓",
+                statusValidErr: "errore/i trovato/i",
+                statusErrLoad: "Errore nel caricamento file",
+                lineCol: "Riga",
+                ctxCopy: "Copia",
+                ctxCut: "Taglia",
+                ctxPaste: "Incolla",
+                ctxWatch: "Aggiungi Watch Directory",
+                ctxSchedule: "Aggiungi Schedule",
+                ctxRatio: "Aggiungi Ratio Group",
+                ctxPrint: "Aggiungi Print Statement",
+                ctxLogging: "Configura Logging",
+                ctxBandwidth: "Limiti Bandwidth",
+                ctxScgi: "Setup SCGI/XMLRPC",
+                ctxMethod: "Definisci Method",
+                ctxEvent: "Event Handler",
+                ctxComment: "Commenta Selezione",
+                ctxUncomment: "Decommenta Selezione",
+                ctxPrintDoc: "Stampa Documento",
+                ctxLookup: "Cerca Selezione",
+                validErrMsg: "il comando manca dell'operatore '='",
+                toastPopupBlocked: "Abilita i popup per stampare",
+                toastPrintError: "Errore durante la stampa",
+                historyTitle: "📜 Cronologia Versioni",
+                historyEmpty: "Nessuna versione salvata",
+                historyCurrent: "Corrente",
+                historyRestore: "Ripristina",
+                historyDelete: "Elimina",
+                historyRestoreConfirm: "Ripristinare questa versione?",
+                historyDeleteConfirm: "Eliminare questa versione?",
+                historyRestored: "Versione ripristinata",
+                historyDeleted: "Versione eliminata",
+                autoSaveRestored: "Auto-save ripristinato",
+                autoSaveAvailable: "Versione auto-salvata disponibile",
+                confirmLoadTemplate: "Sostituire la configurazione corrente con il template? Tutte le modifiche non salvate andranno perse.",
+                confirmReload: "Ricaricare il file di configurazione dal server? Tutte le modifiche non salvate andranno perse.",
+                confirmSave: "Salvare la configurazione corrente sul server? Questo sovrascriverà il file di configurazione esistente.",
+                confirmTitle: "Conferma Azione",
+                btnCancel: "Annulla",
+                btnOk: "OK"
+            },
+            de: {
+                toolbarTitle: "📁 rtorrent Konfigurations-Editor",
+                btnLoadTemplate: "📄 Vorlage Laden",
+                btnReload: "🔄 Neu Laden",
+                btnLoadFile: "📂 Aus Datei Laden",
+                btnSave: "💾 Speichern",
+                btnDownload: "💾 Herunterladen",
+                btnValidate: "✓ Validieren",
+                btnHistory: "🕐 Verlauf",
+                btnRestore: "↩️ Wiederherstellen",
+                tooltipLoadTemplate: "Eine vorkonfigurierte rtorrent-Vorlage zum Starten laden",
+                tooltipReload: "Die aktuelle Konfigurationsdatei vom Server neu laden",
+                tooltipLoadFile: "Eine Konfigurationsdatei von Ihrem lokalen Computer laden",
+                tooltipSave: "Die aktuelle Konfiguration auf dem Server speichern",
+                tooltipDownload: "Die Konfigurationsdatei auf Ihren Computer herunterladen",
+                tooltipValidate: "Die Konfiguration auf Syntaxfehler und Warnungen prüfen",
+                tooltipHistory: "Frühere gespeicherte Versionen anzeigen und wiederherstellen",
+                tooltipRestore: "Die automatisch gespeicherte Version aus dem Browser-Speicher wiederherstellen",
+                tooltipLangSelector: "Sprache der Benutzeroberfläche ändern",
+                statusReady: "Bereit",
+                statusLoaded: "Vorlage geladen ✓",
+                statusFileLoaded: "Datei geladen ✓",
+                statusDownloaded: "Datei heruntergeladen ✓",
+                statusValidOk: "Validierung OK ✓",
+                statusValidErr: "Fehler gefunden",
+                statusErrLoad: "Fehler beim Laden der Datei",
+                lineCol: "Zeile",
+                ctxCopy: "Kopieren",
+                ctxCut: "Ausschneiden",
+                ctxPaste: "Einfügen",
+                ctxWatch: "Watch-Verzeichnis Hinzufügen",
+                ctxSchedule: "Zeitplan Hinzufügen",
+                ctxRatio: "Ratio-Gruppe Hinzufügen",
+                ctxPrint: "Print-Anweisung Hinzufügen",
+                ctxLogging: "Logging Konfigurieren",
+                ctxBandwidth: "Bandbreiten-Limits",
+                ctxScgi: "SCGI/XMLRPC Einrichten",
+                ctxMethod: "Methode Definieren",
+                ctxEvent: "Event-Handler",
+                ctxComment: "Auswahl Kommentieren",
+                ctxUncomment: "Kommentar Entfernen",
+                ctxPrintDoc: "Dokument Drucken",
+                ctxLookup: "Auswahl Nachschlagen",
+                validErrMsg: "Befehl fehlt der '='-Operator",
+                toastPopupBlocked: "Bitte Popups aktivieren zum Drucken",
+                toastPrintError: "Fehler beim Drucken",
+                historyTitle: "📜 Versionsverlauf",
+                historyEmpty: "Keine gespeicherten Versionen",
+                historyCurrent: "Aktuell",
+                historyRestore: "Wiederherstellen",
+                historyDelete: "Löschen",
+                historyRestoreConfirm: "Diese Version wiederherstellen?",
+                historyDeleteConfirm: "Diese Version löschen?",
+                historyRestored: "Version wiederhergestellt",
+                historyDeleted: "Version gelöscht",
+                autoSaveRestored: "Auto-save wiederhergestellt",
+                autoSaveAvailable: "Auto-gespeicherte Version verfügbar",
+                confirmLoadTemplate: "Die aktuelle Konfiguration durch die Vorlage ersetzen? Alle nicht gespeicherten Änderungen gehen verloren.",
+                confirmReload: "Die Konfigurationsdatei vom Server neu laden? Alle nicht gespeicherten Änderungen gehen verloren.",
+                confirmSave: "Die aktuelle Konfiguration auf dem Server speichern? Dies wird die vorhandene Konfigurationsdatei überschreiben.",
+                confirmTitle: "Aktion Bestätigen",
+                btnCancel: "Abbrechen",
+                btnOk: "OK"
+            },
+            fr: {
+                toolbarTitle: "📁 Éditeur de Configuration rtorrent",
+                btnLoadTemplate: "📄 Charger Modèle",
+                btnReload: "🔄 Recharger",
+                btnLoadFile: "📂 Charger depuis Fichier",
+                btnSave: "💾 Enregistrer",
+                btnDownload: "💾 Télécharger",
+                btnValidate: "✓ Valider",
+                btnHistory: "🕐 Historique",
+                btnRestore: "↩️ Restaurer",
+                tooltipLoadTemplate: "Charger un modèle rtorrent pré-configuré pour commencer",
+                tooltipReload: "Recharger le fichier de configuration actuel depuis le serveur",
+                tooltipLoadFile: "Charger un fichier de configuration depuis votre ordinateur local",
+                tooltipSave: "Enregistrer la configuration actuelle sur le serveur",
+                tooltipDownload: "Télécharger le fichier de configuration sur votre ordinateur",
+                tooltipValidate: "Vérifier la configuration pour les erreurs de syntaxe et les avertissements",
+                tooltipHistory: "Afficher et restaurer les versions précédemment enregistrées",
+                tooltipRestore: "Restaurer la version sauvegardée automatiquement depuis le stockage du navigateur",
+                tooltipLangSelector: "Changer la langue de l'interface",
+                statusReady: "Prêt",
+                statusLoaded: "Modèle chargé ✓",
+                statusFileLoaded: "Fichier chargé ✓",
+                statusDownloaded: "Fichier téléchargé ✓",
+                statusValidOk: "Validation OK ✓",
+                statusValidErr: "erreur(s) trouvée(s)",
+                statusErrLoad: "Erreur lors du chargement du fichier",
+                lineCol: "Ligne",
+                ctxCopy: "Copier",
+                ctxCut: "Couper",
+                ctxPaste: "Coller",
+                ctxWatch: "Ajouter Répertoire Watch",
+                ctxSchedule: "Ajouter Planification",
+                ctxRatio: "Ajouter Groupe Ratio",
+                ctxPrint: "Ajouter Déclaration Print",
+                ctxLogging: "Configurer Logging",
+                ctxBandwidth: "Limites de Bande Passante",
+                ctxScgi: "Configurer SCGI/XMLRPC",
+                ctxMethod: "Définir Méthode",
+                ctxEvent: "Gestionnaire d'Événements",
+                ctxComment: "Commenter Sélection",
+                ctxUncomment: "Décommenter Sélection",
+                ctxPrintDoc: "Imprimer Document",
+                ctxLookup: "Rechercher Sélection",
+                validErrMsg: "la commande manque l'opérateur '='",
+                toastPopupBlocked: "Veuillez autoriser les popups pour imprimer",
+                toastPrintError: "Erreur lors de l'impression",
+                historyTitle: "📜 Historique des Versions",
+                historyEmpty: "Aucune version enregistrée",
+                historyCurrent: "Actuel",
+                historyRestore: "Restaurer",
+                historyDelete: "Supprimer",
+                historyRestoreConfirm: "Restaurer cette version?",
+                historyDeleteConfirm: "Supprimer cette version?",
+                historyRestored: "Version restaurée",
+                historyDeleted: "Version supprimée",
+                autoSaveRestored: "Auto-save restauré",
+                autoSaveAvailable: "Version auto-sauvegardée disponible",
+                confirmLoadTemplate: "Remplacer la configuration actuelle par le modèle ? Toutes les modifications non enregistrées seront perdues.",
+                confirmReload: "Recharger le fichier de configuration depuis le serveur ? Toutes les modifications non enregistrées seront perdues.",
+                confirmSave: "Enregistrer la configuration actuelle sur le serveur ? Cela écrasera le fichier de configuration existant.",
+                confirmTitle: "Confirmer l'Action",
+                btnCancel: "Annuler",
+                btnOk: "OK"
+            },
+            es: {
+                toolbarTitle: "📁 Editor de Configuración rtorrent",
+                btnLoadTemplate: "📄 Cargar Plantilla",
+                btnReload: "🔄 Recargar",
+                btnLoadFile: "📂 Cargar desde Archivo",
+                btnSave: "💾 Guardar",
+                btnDownload: "💾 Descargar",
+                btnValidate: "✓ Validar",
+                btnHistory: "🕐 Historial",
+                btnRestore: "↩️ Restaurar",
+                tooltipLoadTemplate: "Cargar una plantilla rtorrent pre-configurada para empezar",
+                tooltipReload: "Recargar el archivo de configuración actual desde el servidor",
+                tooltipLoadFile: "Cargar un archivo de configuración desde su computadora local",
+                tooltipSave: "Guardar la configuración actual en el servidor",
+                tooltipDownload: "Descargar el archivo de configuración a su computadora",
+                tooltipValidate: "Verificar la configuración en busca de errores de sintaxis y advertencias",
+                tooltipHistory: "Ver y restaurar versiones guardadas anteriormente",
+                tooltipRestore: "Restaurar la versión guardada automáticamente desde el almacenamiento del navegador",
+                tooltipLangSelector: "Cambiar el idioma de la interfaz",
+                statusReady: "Listo",
+                statusLoaded: "Plantilla cargada ✓",
+                statusFileLoaded: "Archivo cargado ✓",
+                statusDownloaded: "Archivo descargado ✓",
+                statusValidOk: "Validación OK ✓",
+                statusValidErr: "error(es) encontrado(s)",
+                statusErrLoad: "Error al cargar el archivo",
+                lineCol: "Línea",
+                ctxCopy: "Copiar",
+                ctxCut: "Cortar",
+                ctxPaste: "Pegar",
+                ctxWatch: "Añadir Directorio Watch",
+                ctxSchedule: "Añadir Programación",
+                ctxRatio: "Añadir Grupo Ratio",
+                ctxPrint: "Añadir Declaración Print",
+                ctxLogging: "Configurar Logging",
+                ctxBandwidth: "Límites de Ancho de Banda",
+                ctxScgi: "Configurar SCGI/XMLRPC",
+                ctxMethod: "Definir Método",
+                ctxEvent: "Manejador de Eventos",
+                ctxComment: "Comentar Selección",
+                ctxUncomment: "Descomentar Selección",
+                ctxPrintDoc: "Imprimir Documento",
+                ctxLookup: "Buscar Selección",
+                validErrMsg: "el comando carece del operador '='",
+                toastPopupBlocked: "Por favor habilite los popups para imprimir",
+                toastPrintError: "Error al imprimir",
+                historyTitle: "📜 Historial de Versiones",
+                historyEmpty: "No hay versiones guardadas",
+                historyCurrent: "Actual",
+                historyRestore: "Restaurar",
+                historyDelete: "Eliminar",
+                historyRestoreConfirm: "¿Restaurar esta versión?",
+                historyDeleteConfirm: "¿Eliminar esta versión?",
+                historyRestored: "Versión restaurada",
+                historyDeleted: "Versión eliminada",
+                autoSaveRestored: "Auto-guardado restaurado",
+                autoSaveAvailable: "Versión auto-guardada disponible",
+                confirmLoadTemplate: "¿Reemplazar la configuración actual con la plantilla? Todos los cambios no guardados se perderán.",
+                confirmReload: "¿Recargar el archivo de configuración desde el servidor? Todos los cambios no guardados se perderán.",
+                confirmSave: "¿Guardar la configuración actual en el servidor? Esto sobrescribirá el archivo de configuración existente.",
+                confirmTitle: "Confirmar Acción",
+                btnCancel: "Cancelar",
+                btnOk: "OK"
+            }
+        };
+
+        let currentLang = 'en';
+        let tooltipTimeout = null;
+        let autoSaveInterval = null;
+        let lastSavedContent = '';
+        const AUTOSAVE_KEY = 'rtorrent_config_autosave';
+        const HISTORY_KEY = 'rtorrent_config_history';
+        const MAX_HISTORY_ITEMS = 20;
+
+        // Documentation database for tooltips
+        const rtorrentDocs = {
+            "method.insert": {
+                title: "method.insert",
+                description: "Define a new custom method/variable. Methods can store values or execute commands.",
+                syntax: "method.insert = name, type, value",
+                values: "type: simple|private|const|value|string",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-method-insert"
+            },
+            "method.set": {
+                title: "method.set",
+                description: "Set the value of an existing method.",
+                syntax: "method.set = name, value",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-method-set"
+            },
+            "method.set_key": {
+                title: "method.set_key",
+                description: "Attach a command to an event. When the event triggers, the command executes.",
+                syntax: "method.set_key = event.name, key_name, \"command\"",
+                values: "Events: download.finished, download.inserted_new, download.erased, etc.",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-method-set-key"
+            },
+            "session.path.set": {
+                title: "session.path.set",
+                description: "Set the directory where rtorrent stores session data (resume files, torrent states).",
+                syntax: "session.path.set = /path/to/session",
+                values: "Must be an absolute path. Directory will be created if it doesn't exist.",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-session-path"
+            },
+            "directory.default.set": {
+                title: "directory.default.set",
+                description: "Set the default download directory for new torrents.",
+                syntax: "directory.default.set = /path/to/downloads",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-directory-default"
+            },
+            "network.port_range.set": {
+                title: "network.port_range.set",
+                description: "Set the listening port or port range for incoming peer connections.",
+                syntax: "network.port_range.set = 50000-50000",
+                values: "Single port: 6881-6881, Range: 6881-6889. Must be open in firewall.",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-network-port-range"
+            },
+            "network.port_random.set": {
+                title: "network.port_random.set",
+                description: "Use a random port from the port range instead of the first available.",
+                syntax: "network.port_random.set = yes|no",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-network-port-random"
+            },
+            "network.bind_address.set": {
+                title: "network.bind_address.set",
+                description: "Bind to a specific IP address. Use 0.0.0.0 to bind to all interfaces.",
+                syntax: "network.bind_address.set = 0.0.0.0",
+                values: "IPv4 address. Use 0.0.0.0 for all interfaces, or specific IP to bind to one interface.",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-network-bind-address"
+            },
+            "network.receive_buffer.size": {
+                title: "network.receive_buffer.size",
+                description: "Get the current receive buffer size in bytes.",
+                syntax: "network.receive_buffer.size",
+                values: "Read-only. Returns buffer size in bytes.",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-network-receive-buffer-size"
+            },
+            "network.receive_buffer.size.set": {
+                title: "network.receive_buffer.size.set",
+                description: "Set the receive buffer size in bytes. Larger values can improve performance on fast connections.",
+                syntax: "network.receive_buffer.size.set = 4M",
+                values: "Size in bytes. Can use suffixes: K (kilobytes), M (megabytes). Typical: 2M-8M.",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-network-receive-buffer-size"
+            },
+            "network.send_buffer.size": {
+                title: "network.send_buffer.size",
+                description: "Get the current send buffer size in bytes.",
+                syntax: "network.send_buffer.size",
+                values: "Read-only. Returns buffer size in bytes.",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-network-send-buffer-size"
+            },
+            "network.send_buffer.size.set": {
+                title: "network.send_buffer.size.set",
+                description: "Set the send buffer size in bytes. Larger values can improve performance on fast connections.",
+                syntax: "network.send_buffer.size.set = 4M",
+                values: "Size in bytes. Can use suffixes: K (kilobytes), M (megabytes). Typical: 2M-8M.",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-network-send-buffer-size"
+            },
+            "network.scgi.open_local": {
+                title: "network.scgi.open_local",
+                description: "Open a UNIX socket for SCGI/XMLRPC communication. Used by web interfaces like ruTorrent.",
+                syntax: "network.scgi.open_local = /path/to/socket",
+                values: "Set appropriate permissions with chmod after creation.",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-network-scgi-open-local"
+            },
+            "network.scgi.open_port": {
+                title: "network.scgi.open_port",
+                description: "Open a TCP port for SCGI/XMLRPC communication. Less secure than UNIX socket.",
+                syntax: "network.scgi.open_port = 127.0.0.1:5000",
+                values: "Use 127.0.0.1 for local-only access. Never expose to internet without authentication.",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-network-scgi-open-port"
+            },
+            "dht.mode.set": {
+                title: "dht.mode.set",
+                description: "Enable or disable DHT (Distributed Hash Table) for tracker-less torrents.",
+                syntax: "dht.mode.set = disable|off|auto|on",
+                values: "disable/off: disabled, auto: on for public torrents, on: always on. Disable for private trackers!",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-dht-mode"
+            },
+            "protocol.pex.set": {
+                title: "protocol.pex.set",
+                description: "Enable or disable PEX (Peer Exchange). Allows peers to share peer lists.",
+                syntax: "protocol.pex.set = yes|no",
+                values: "Disable for private trackers as it may violate their rules.",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-protocol-pex"
+            },
+            "protocol.encryption.set": {
+                title: "protocol.encryption.set",
+                description: "Configure protocol encryption to bypass ISP throttling.",
+                syntax: "protocol.encryption.set = option1,option2,...",
+                values: "Options: allow_incoming, try_outgoing, require, require_RC4, enable_retry, prefer_plaintext",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-protocol-encryption"
+            },
+            "throttle.max_uploads.set": {
+                title: "throttle.max_uploads.set",
+                description: "Maximum simultaneous uploads per torrent.",
+                syntax: "throttle.max_uploads.set = 15",
+                values: "Typical range: 10-20. Higher values may reduce per-peer upload speed.",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-throttle-max-uploads"
+            },
+            "throttle.max_uploads.global.set": {
+                title: "throttle.max_uploads.global.set",
+                description: "Maximum simultaneous uploads across all torrents.",
+                syntax: "throttle.max_uploads.global.set = 250",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-throttle-max-uploads-global"
+            },
+            "throttle.global_down.max_rate.set_kb": {
+                title: "throttle.global_down.max_rate.set_kb",
+                description: "Global download speed limit in KB/s. 0 = unlimited.",
+                syntax: "throttle.global_down.max_rate.set_kb = 0",
+                values: "1 KB/s = 8 Kbps. Set to 0 for unlimited or your connection speed / 8.",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-throttle-global-down-max-rate"
+            },
+            "throttle.global_up.max_rate.set_kb": {
+                title: "throttle.global_up.max_rate.set_kb",
+                description: "Global upload speed limit in KB/s. 0 = unlimited.",
+                syntax: "throttle.global_up.max_rate.set_kb = 0",
+                values: "Set to 80% of your upload speed for optimal performance.",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-throttle-global-up-max-rate"
+            },
+            "pieces.memory.max.set": {
+                title: "pieces.memory.max.set",
+                description: "Maximum memory used for caching piece data before writing to disk.",
+                syntax: "pieces.memory.max.set = 1800M",
+                values: "Suffix: K, M, G. Higher values reduce disk I/O but use more RAM.",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-pieces-memory-max"
+            },
+            "schedule2": {
+                title: "schedule2",
+                description: "Schedule a command to run at intervals. Used for watch directories, cleanup tasks, etc.",
+                syntax: "schedule2 = name, start, interval, command",
+                values: "start: seconds delay before first run. interval: seconds between runs. 0 = run once.",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-schedule2"
+            },
+            "execute.throw": {
+                title: "execute.throw",
+                description: "Execute a shell command. Throws an error if command fails.",
+                syntax: "execute.throw = command, arg1, arg2, ...",
+                values: "Use for critical commands where failure should stop rtorrent startup.",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-execute-throw"
+            },
+            "execute.nothrow": {
+                title: "execute.nothrow",
+                description: "Execute a shell command. Does not throw error on failure.",
+                syntax: "execute.nothrow = command, arg1, arg2, ...",
+                values: "Use for non-critical commands like chmod, cleanup tasks.",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-execute-nothrow"
+            },
+            "log.open_file": {
+                title: "log.open_file",
+                description: "Open a log file for writing. Must add outputs with log.add_output.",
+                syntax: "log.open_file = \"log_name\", \"/path/to/file.log\"",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-log-open-file"
+            },
+            "log.add_output": {
+                title: "log.add_output",
+                description: "Connect a logging event/group to a log file.",
+                syntax: "log.add_output = \"event_name\", \"log_name\"",
+                values: "Events: critical, error, warn, info, debug, tracker_debug, dht_debug, peer_info, etc.",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-log-add-output"
+            },
+            "print": {
+                title: "print",
+                description: "Print a message to the log output.",
+                syntax: "print = \"message\"",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-print"
+            },
+            "encoding.add": {
+                title: "encoding.add",
+                description: "Add a character encoding for torrent name display.",
+                syntax: "encoding.add = UTF-8",
+                values: "Common: UTF-8, ISO-8859-1, Windows-1252",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-encoding-add"
+            },
+            "system.umask.set": {
+                title: "system.umask.set",
+                description: "Set file creation permissions mask (octal).",
+                syntax: "system.umask.set = 0027",
+                values: "0022 = rwxr-xr-x, 0027 = rwxr-x---, 0077 = rwx------",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-system-umask"
+            },
+            "system.daemon.set": {
+                title: "system.daemon.set",
+                description: "Run rtorrent as a background daemon.",
+                syntax: "system.daemon.set = true|false",
+                values: "Requires SCGI socket for external control.",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-system-daemon"
+            },
+            "trackers.use_udp.set": {
+                title: "trackers.use_udp.set",
+                description: "Enable UDP tracker protocol support.",
+                syntax: "trackers.use_udp.set = yes|no",
+                values: "May be blocked by some ISPs or networks.",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-trackers-use-udp"
+            }
+        };
+
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast ' + type;
+            toast.style.display = 'block';
+            
+            // Calculate timeout based on message length and number of lines
+            const lines = message.split('\n').length;
+            const chars = message.length;
+            let timeout = 3000; // Base timeout
+            
+            if (type === 'error' || type === 'warning') {
+                // 2 seconds per line + 20ms per character (min 5s, max 30s)
+                timeout = Math.min(Math.max(lines * 2000 + chars * 20, 5000), 30000);
+            }
+            
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, timeout);
+        }
+
+        function detectLanguage() {
+            const browserLang = navigator.language.split('-')[0];
+            return translations[browserLang] ? browserLang : 'en';
+        }
+
+        function changeLanguage(lang) {
+            if (lang === 'auto') {
+                currentLang = detectLanguage();
+            } else {
+                currentLang = lang;
+            }
+            updateUI();
+        }
+
+        function updateUI() {
+            const t = translations[currentLang] || translations['en'];
+            
+            // Check if elements exist before updating
+            const titleEl = document.getElementById('toolbarTitle');
+            const btnLoadTemplateEl = document.getElementById('btnLoadTemplate');
+            const btnReloadEl = document.getElementById('btnReload');
+            const btnLoadFileEl = document.getElementById('btnLoadFile');
+            const btnSaveEl = document.getElementById('btnSave');
+            const btnDownloadEl = document.getElementById('btnDownload');
+            const btnValidateEl = document.getElementById('btnValidate');
+            const btnHistoryEl = document.getElementById('btnHistory');
+            const btnRestoreEl = document.getElementById('btnRestore');
+            const langSelectorEl = document.getElementById('langSelector');
+            const statusEl = document.getElementById('status');
+            
+            if (titleEl && t.toolbarTitle) titleEl.textContent = t.toolbarTitle;
+            if (btnLoadTemplateEl && t.btnLoadTemplate) {
+                btnLoadTemplateEl.innerHTML = t.btnLoadTemplate;
+                if (t.tooltipLoadTemplate) btnLoadTemplateEl.title = t.tooltipLoadTemplate;
+            }
+            if (btnReloadEl && t.btnReload) {
+                btnReloadEl.innerHTML = t.btnReload;
+                if (t.tooltipReload) btnReloadEl.title = t.tooltipReload;
+            }
+            if (btnLoadFileEl && t.btnLoadFile) {
+                btnLoadFileEl.innerHTML = t.btnLoadFile;
+                if (t.tooltipLoadFile) btnLoadFileEl.title = t.tooltipLoadFile;
+            }
+            if (btnSaveEl && t.btnSave) {
+                btnSaveEl.innerHTML = t.btnSave;
+                if (t.tooltipSave) btnSaveEl.title = t.tooltipSave;
+            }
+            if (btnDownloadEl && t.btnDownload) {
+                btnDownloadEl.innerHTML = t.btnDownload;
+                if (t.tooltipDownload) btnDownloadEl.title = t.tooltipDownload;
+            }
+            if (btnValidateEl && t.btnValidate) {
+                btnValidateEl.innerHTML = t.btnValidate;
+                if (t.tooltipValidate) btnValidateEl.title = t.tooltipValidate;
+            }
+            if (btnHistoryEl && t.btnHistory) {
+                btnHistoryEl.innerHTML = t.btnHistory;
+                if (t.tooltipHistory) btnHistoryEl.title = t.tooltipHistory;
+            }
+            if (btnRestoreEl && t.btnRestore) {
+                btnRestoreEl.innerHTML = t.btnRestore;
+                if (t.tooltipRestore) btnRestoreEl.title = t.tooltipRestore;
+            }
+            if (langSelectorEl && t.tooltipLangSelector) {
+                langSelectorEl.title = t.tooltipLangSelector;
+            }
+            if (statusEl && t.statusReady) statusEl.textContent = t.statusReady;
+            
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (t[key]) el.textContent = t[key];
+            });
+            
+            updateLineInfo();
+            checkAutoSaveAvailable();
+        }
+
+        function updateLineInfo() {
+            const cursor = editor.getCursorPosition();
+            const t = translations[currentLang];
+            document.getElementById('line-info').textContent = 
+                `${t.lineCol} ${cursor.row + 1}, Col ${cursor.column + 1}`;
+        }
+
+        // Define custom rtorrent mode
+        ace.define('ace/mode/rtorrent', [], function(require, exports, module) {
+            const oop = require("ace/lib/oop");
+            const TextMode = require("ace/mode/text").Mode;
+            const RtorrentHighlightRules = require("ace/mode/rtorrent_highlight_rules").RtorrentHighlightRules;
+
+            const Mode = function() {
+                this.HighlightRules = RtorrentHighlightRules;
+            };
+            oop.inherits(Mode, TextMode);
+
+            (function() {
+                this.lineCommentStart = "#";
+                this.$id = "ace/mode/rtorrent";
+            }).call(Mode.prototype);
+
+            exports.Mode = Mode;
+        });
+
+        // Define highlighting rules
+        ace.define('ace/mode/rtorrent_highlight_rules', [], function(require, exports, module) {
+            const oop = require("ace/lib/oop");
+            const TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
+
+            const RtorrentHighlightRules = function() {
+                const rtorrentTokens = [
+                    "method.insert", "method.set", "method.get", "method.set_key",
+                    "session.path.set", "session.path", "session.name.set",
+                    "directory.default.set", "directory.default",
+                    "network.port_range.set", "network.port_random.set",
+                    "network.bind_address.set",
+                    "network.receive_buffer.size", "network.receive_buffer.size.set",
+                    "network.send_buffer.size", "network.send_buffer.size.set",
+                    "network.http.max_open.set", "network.max_open_files.set",
+                    "network.max_open_sockets.set", "network.xmlrpc.size_limit.set",
+                    "network.http.dns_cache_timeout.set", "network.http.capath.set",
+                    "network.http.ssl_verify_peer.set", "network.http.ssl_verify_host.set",
+                    "network.scgi.open_local", "network.scgi.open_port", "network.scgi.dont_route",
+                    "network.rpc.use_xmlrpc.set", "network.rpc.use_jsonrpc.set",
+                    "network.listen.backlog.set", "network.open_files", "network.open_sockets",
+                    "network.total_handshakes",
+                    "dht.mode.set", "dht.port.set",
+                    "protocol.pex.set", "protocol.encryption.set",
+                    "throttle.max_uploads.set", "throttle.max_uploads.global.set",
+                    "throttle.min_peers.normal.set", "throttle.max_peers.normal.set",
+                    "throttle.min_peers.seed.set", "throttle.max_peers.seed.set",
+                    "throttle.global_down.max_rate.set", "throttle.global_up.max_rate.set",
+                    "throttle.global_down.max_rate.set_kb", "throttle.global_up.max_rate.set_kb",
+                    "trackers.numwant.set", "trackers.use_udp.set",
+                    "pieces.memory.max.set", "pieces.hash.on_completion.set",
+                    "pieces.stats.total_size",
+                    "encoding.add",
+                    "system.umask.set", "system.cwd.set", "system.daemon.set",
+                    "system.pid", "system.time", "system.startup_time", "system.env",
+                    "schedule2", "schedule",
+                    "execute.throw", "execute.nothrow", "execute.capture",
+                    "log.execute", "log.xmlrpc", "log.open_file", "log.add_output",
+                    "log.open_gz_file", "log.open_file_pid", "log.open_gz_file_pid",
+                    "log.append_file", "log.append_gz_file", "log.close", "log.vmmap.dump",
+                    "view.sort_current", "view.add", "view.sort_new",
+                    "keys.layout.set",
+                    "close_low_diskspace", "print", "import", "try_import",
+                    "load.verbose", "load.start_verbose", "load.normal", "load.start",
+                    "cfg.basedir", "cfg.download", "cfg.logs", "cfg.logfile",
+                    "cfg.session", "cfg.watch",
+                    "d.is_multi_file", "d.directory", "d.name", "d.hash",
+                    "d.data_path", "d.session_file", "d.ratio", "d.state",
+                    "d.base_path", "d.base_filename", "d.tied_to_file",
+                    "d.ignore_commands", "d.try_start", "d.try_close",
+                    "d.down.sequential", "d.down.sequential.set",
+                    "watch_load", "watch_start", "monitor_diskspace",
+                    "group.seeding.ratio.command", "on_ratio", "ratio.min.set",
+                    "ratio.max.set", "ratio.upload.set"
+                ];
+
+                rtorrentTokens.sort((a, b) => b.length - a.length);
+                const escapedTokens = rtorrentTokens.map(t => t.replace(/\./g, '\\.'));
+                const tokenPattern = escapedTokens.join('|');
+
+                this.$rules = {
+                    start: [{
+                        token: "comment",
+                        regex: /#.*$/
+                    }, {
+                        token: "string.quoted.double",
+                        regex: /"/,
+                        next: "string"
+                    }, {
+                        token: "support.function.rtorrent",
+                        regex: new RegExp(tokenPattern)
+                    }, {
+                        token: "constant.numeric",
+                        regex: /\b\d+[KMG]?\b/
+                    }, {
+                        token: "constant.numeric",
+                        regex: /\b\d+-\d+\b/
+                    }, {
+                        token: "constant.language",
+                        regex: /\b(?:yes|no|disable|enable|true|false|on|off|auto|private|const|public|simple|value|string|allow_incoming|try_outgoing|enable_retry|prefer_plaintext|require|require_RC4|UTF-8|seeding|greater|qwerty)\b/
+                    }, {
+                        token: "constant.language.log",
+                        regex: /\b(?:critical|error|warn|notice|info|debug|peer_critical|peer_error|peer_warn|peer_notice|peer_info|peer_debug|socket_critical|socket_error|socket_warn|socket_notice|socket_info|socket_debug|storage_critical|storage_error|storage_warn|storage_notice|storage_info|storage_debug|thread_critical|thread_error|thread_warn|thread_notice|thread_info|thread_debug|torrent_critical|torrent_error|torrent_warn|torrent_notice|torrent_info|torrent_debug|connection|connection_bind|connection_fd|connection_filter|connection_hanshake|connection_listen|dht|dht_all|dht_error|dht_controller|dht_node|dht_router|dht_server|instrumentation_memory|instrumentation_mincore|instrumentation_choke|instrumentation_polling|instrumentation_transfers|mock_calls|net_dns|peer_list_events|peer_list_address|protocol_piece_events|protocol_metadata_events|protocol_network_errors|protocol_storage_errors|resume_data|rpc_events|rpc_dump|tracker_dump|tracker_events|tracker_requests|ui_events|tracker_debug)\b/
+                    }, {
+                        token: "keyword.control",
+                        regex: /\b(?:if|cat|sh|mkdir|echo|chmod)\b/
+                    }, {
+                        token: "keyword.operator",
+                        regex: /[=,\(\)\[\]\|<>;]|-[cp]/
+                    }, {
+                        token: "constant.character.escape",
+                        regex: /\\$/
+                    }, {
+                        token: "variable.parameter",
+                        regex: /\([a-zA-Z_\.][a-zA-Z0-9_\.]*\)/
+                    }, {
+                        token: "string.unquoted",
+                        regex: /\/[a-zA-Z0-9_\.\/\-]+|rpc\.socket/
+                    }, {
+                        token: "string.unquoted",
+                        regex: /\*\.[a-zA-Z]+/
+                    }, {
+                        token: "text",
+                        regex: /\s+/
+                    }, {
+                        token: "invalid.deprecated",
+                        regex: /[a-zA-Z_][a-zA-Z0-9_\.]*/
+                    }],
+                    string: [{
+                        token: "constant.character.escape",
+                        regex: /\\./
+                    }, {
+                        token: "constant.language.log",
+                        regex: /\b(?:critical|error|warn|notice|info|debug|peer_critical|peer_error|peer_warn|peer_notice|peer_info|peer_debug|socket_critical|socket_error|socket_warn|socket_notice|socket_info|socket_debug|storage_critical|storage_error|storage_warn|storage_notice|storage_info|storage_debug|thread_critical|thread_error|thread_warn|thread_notice|thread_info|thread_debug|torrent_critical|torrent_error|torrent_warn|torrent_notice|torrent_info|torrent_debug|connection|connection_bind|connection_fd|connection_filter|connection_hanshake|connection_listen|dht|dht_all|dht_error|dht_controller|dht_node|dht_router|dht_server|instrumentation_memory|instrumentation_mincore|instrumentation_choke|instrumentation_polling|instrumentation_transfers|mock_calls|net_dns|peer_list_events|peer_list_address|protocol_piece_events|protocol_metadata_events|protocol_network_errors|protocol_storage_errors|resume_data|rpc_events|rpc_dump|tracker_dump|tracker_events|tracker_requests|ui_events|tracker_debug)\b/
+                    }, {
+                        token: "string.quoted.double",
+                        regex: /"/,
+                        next: "start"
+                    }, {
+                        defaultToken: "string.quoted.double"
+                    }]
+                };
+            };
+
+            oop.inherits(RtorrentHighlightRules, TextHighlightRules);
+            exports.RtorrentHighlightRules = RtorrentHighlightRules;
+        });
+
+        // Initialize editor
+        const editor = ace.edit("editor");
+        editor.setTheme("ace/theme/monokai");
+        editor.session.setMode("ace/mode/rtorrent");
+        
+        editor.setOptions({
+            fontSize: "14px",
+            showPrintMargin: false,
+            enableBasicAutocompletion: true,
+            enableLiveAutocompletion: true,
+            enableSnippets: true,
+            tabSize: 4,
+            useSoftTabs: true,
+            wrap: true,
+            behavioursEnabled: true,  // Enable bracket matching and auto-pairing
+            highlightActiveLine: true,
+            showGutter: true
+        });
+
+        // Custom autocomplete for rtorrent commands
+        const rtorrentCompleter = {
+            getCompletions: function(editor, session, pos, prefix, callback) {
+                const completions = [
+                    // method commands
+                    {caption: "method.insert", value: "method.insert = name, type, \"command\"", meta: "Define custom method", score: 1000},
+                    {caption: "method.insert=d.down.sequential", value: "method.insert=d.down.sequential,value|const,0", meta: "Sequential download flag", score: 900},
+                    {caption: "method.insert=d.down.sequential.set", value: "method.insert=d.down.sequential.set,value|const,0", meta: "Sequential download setter", score: 900},
+                    {caption: "method.set", value: "method.set = name, \"command\"", meta: "Set method value", score: 1000},
+                    {caption: "method.get", value: "method.get = name", meta: "Get method value", score: 1000},
+                    {caption: "method.set_key", value: "method.set_key = event, key, \"command\"", meta: "Set event handler", score: 1000},
+                    
+                    // session commands
+                    {caption: "session.path.set", value: "session.path.set = (cat, (cfg.basedir), \".session/\")", meta: "Set session directory", score: 1000},
+                    {caption: "session.name.set", value: "session.name.set = \"rtorrent\"", meta: "Set session name", score: 900},
+                    
+                    // directory commands
+                    {caption: "directory.default.set", value: "directory.default.set = (cat, (cfg.basedir), \"download/\")", meta: "Set default download directory", score: 1000},
+                    
+                    // network commands
+                    {caption: "network.port_range.set", value: "network.port_range.set = 50000-50000", meta: "Set listening port range", score: 1000},
+                    {caption: "network.port_random.set", value: "network.port_random.set = no", meta: "Enable/disable random port", score: 900},
+                    {caption: "network.bind_address.set", value: "network.bind_address.set = 0.0.0.0", meta: "Bind to specific IP address", score: 900},
+                    {caption: "network.receive_buffer.size.set", value: "network.receive_buffer.size.set = 4M", meta: "Set receive buffer size", score: 800},
+                    {caption: "network.send_buffer.size.set", value: "network.send_buffer.size.set = 4M", meta: "Set send buffer size", score: 800},
+                    {caption: "network.scgi.open_local", value: "network.scgi.open_local = (cat, (session.path), rpc.socket)", meta: "Open SCGI socket", score: 1000},
+                    {caption: "network.scgi.open_port", value: "network.scgi.open_port = 127.0.0.1:5000", meta: "Open SCGI TCP port", score: 900},
+                    {caption: "network.http.max_open.set", value: "network.http.max_open.set = 50", meta: "Max open HTTP connections", score: 800},
+                    {caption: "network.max_open_files.set", value: "network.max_open_files.set = 600", meta: "Max open files", score: 900},
+                    {caption: "network.max_open_sockets.set", value: "network.max_open_sockets.set = 300", meta: "Max open sockets", score: 900},
+                    
+                    // dht commands
+                    {caption: "dht.mode.set", value: "dht.mode.set = disable", meta: "Enable/disable DHT (disable|off|auto|on)", score: 1000},
+                    {caption: "dht.port.set", value: "dht.port.set = 6881", meta: "Set DHT port", score: 800},
+                    
+                    // protocol commands
+                    {caption: "protocol.pex.set", value: "protocol.pex.set = no", meta: "Enable/disable PEX", score: 1000},
+                    {caption: "protocol.encryption.set", value: "protocol.encryption.set = allow_incoming,try_outgoing,enable_retry", meta: "Set encryption options", score: 1000},
+                    
+                    // throttle commands
+                    {caption: "throttle.max_uploads.set", value: "throttle.max_uploads.set = 15", meta: "Max simultaneous uploads per torrent", score: 1000},
+                    {caption: "throttle.max_uploads.global.set", value: "throttle.max_uploads.global.set = 250", meta: "Max simultaneous uploads globally", score: 1000},
+                    {caption: "throttle.min_peers.normal.set", value: "throttle.min_peers.normal.set = 20", meta: "Min peers for downloading", score: 900},
+                    {caption: "throttle.max_peers.normal.set", value: "throttle.max_peers.normal.set = 60", meta: "Max peers for downloading", score: 900},
+                    {caption: "throttle.min_peers.seed.set", value: "throttle.min_peers.seed.set = 30", meta: "Min peers for seeding", score: 900},
+                    {caption: "throttle.max_peers.seed.set", value: "throttle.max_peers.seed.set = 80", meta: "Max peers for seeding", score: 900},
+                    {caption: "throttle.global_down.max_rate.set_kb", value: "throttle.global_down.max_rate.set_kb = 0", meta: "Global download limit (KB/s, 0=unlimited)", score: 1000},
+                    {caption: "throttle.global_up.max_rate.set_kb", value: "throttle.global_up.max_rate.set_kb = 0", meta: "Global upload limit (KB/s, 0=unlimited)", score: 1000},
+                    
+                    // trackers commands
+                    {caption: "trackers.numwant.set", value: "trackers.numwant.set = 80", meta: "Number of peers to request from tracker", score: 900},
+                    {caption: "trackers.use_udp.set", value: "trackers.use_udp.set = no", meta: "Enable/disable UDP trackers", score: 900},
+                    
+                    // pieces commands
+                    {caption: "pieces.memory.max.set", value: "pieces.memory.max.set = 1800M", meta: "Max memory for piece data", score: 1000},
+                    {caption: "pieces.hash.on_completion.set", value: "pieces.hash.on_completion.set = no", meta: "Hash check on completion", score: 800},
+                    
+                    // encoding commands
+                    {caption: "encoding.add", value: "encoding.add = UTF-8", meta: "Add character encoding", score: 900},
+                    
+                    // system commands
+                    {caption: "system.umask.set", value: "system.umask.set = 0027", meta: "Set file creation umask", score: 900},
+                    {caption: "system.cwd.set", value: "system.cwd.set = (directory.default)", meta: "Set working directory", score: 800},
+                    {caption: "system.daemon.set", value: "system.daemon.set = true", meta: "Run as daemon", score: 900},
+                    
+                    // schedule commands
+                    {caption: "schedule2", value: "schedule2 = name, start, interval, \"command\"", meta: "Schedule periodic command", score: 1000},
+                    
+                    // execute commands
+                    {caption: "execute.throw", value: "execute.throw = command, args", meta: "Execute command (throw on error)", score: 900},
+                    {caption: "execute.nothrow", value: "execute.nothrow = command, args", meta: "Execute command (no throw)", score: 900},
+                    
+                    // log commands
+                    {caption: "log.open_file", value: "log.open_file = \"log_name\", (cat, (cfg.logs), \"file.log\")", meta: "Open log file", score: 1000},
+                    {caption: "log.add_output", value: "log.add_output = \"info\", \"log_name\"", meta: "Add output to log", score: 1000},
+                    {caption: "log.execute", value: "log.execute = (cat, (cfg.logs), \"execute.log\")", meta: "Log executed commands", score: 900},
+                    
+                    // print command
+                    {caption: "print", value: "print = \"message\"", meta: "Print message to log", score: 900},
+                    
+                    // load commands
+                    {caption: "load.verbose", value: "load.verbose = (cat, (cfg.watch), \"*.torrent\")", meta: "Load torrents (verbose)", score: 900},
+                    {caption: "load.start_verbose", value: "load.start_verbose = (cat, (cfg.watch), \"*.torrent\")", meta: "Load and start torrents", score: 1000},
+                    
+                    // close_low_diskspace
+                    {caption: "close_low_diskspace", value: "close_low_diskspace = 1000M", meta: "Close torrents on low disk space", score: 900},
+                    
+                    // ratio commands
+                    {caption: "ratio.min.set", value: "ratio.min.set = 200", meta: "Minimum ratio (percentage)", score: 900},
+                    {caption: "ratio.max.set", value: "ratio.max.set = 300", meta: "Maximum ratio (percentage)", score: 900},
+                    {caption: "ratio.upload.set", value: "ratio.upload.set = 20M", meta: "Upload amount for ratio", score: 900},
+                    
+                    // Common values
+                    {caption: "yes", value: "yes", meta: "Boolean true", score: 500},
+                    {caption: "no", value: "no", meta: "Boolean false", score: 500},
+                    {caption: "enable", value: "enable", meta: "Enable feature", score: 500},
+                    {caption: "disable", value: "disable", meta: "Disable feature", score: 500},
+                    {caption: "private", value: "private", meta: "Private scope", score: 500},
+                    {caption: "const", value: "const", meta: "Constant value", score: 500},
+                    {caption: "simple", value: "simple", meta: "Simple method", score: 500},
+                    {caption: "value", value: "value", meta: "Value type", score: 500},
+                    
+                    // Log levels
+                    {caption: "critical", value: "critical", meta: "Log level: critical", score: 400},
+                    {caption: "error", value: "error", meta: "Log level: error", score: 400},
+                    {caption: "warn", value: "warn", meta: "Log level: warning", score: 400},
+                    {caption: "notice", value: "notice", meta: "Log level: notice", score: 400},
+                    {caption: "info", value: "info", meta: "Log level: info", score: 400},
+                    {caption: "debug", value: "debug", meta: "Log level: debug", score: 400},
+                    {caption: "tracker_debug", value: "tracker_debug", meta: "Log group: tracker debug", score: 400}
+                ];
+                
+                callback(null, completions.filter(c => c.caption.toLowerCase().includes(prefix.toLowerCase())));
+            }
+        };
+        
+        // Add custom completer
+        ace.require("ace/ext/language_tools").addCompleter(rtorrentCompleter);
+
+        // Enable bracket matching visualization
+        editor.setHighlightSelectedWord(true);
+        editor.setBehavioursEnabled(true);
+        
+        // Make editor visible after Ace is loaded
+        setTimeout(() => {
+            document.getElementById('editor').classList.add('loaded');
+        }, 100);
+        
+        // Add bracket matching validation
+        editor.session.on('change', function() {
+            // Get current annotations from Ace (syntax errors)
+            const aceAnnotations = editor.session.getAnnotations() || [];
+            
+            // Filter out previous bracket errors to reset them
+            const nonBracketAnnotations = aceAnnotations.filter(ann => 
+                !ann.text || (!ann.text.includes('bracket') && !ann.text.includes('Unclosed') && !ann.text.includes('Unmatched'))
+            );
+            
+            // Check for unbalanced brackets
+            const content = editor.getValue();
+            const closeBrackets = { ')': '(', ']': '[', '}': '{' };
+            const stack = [];
+            const bracketErrors = [];
+            
+            // Track if we're at the start of a line (after whitespace)
+            let lineStart = true;
+            let inComment = false;
+            
+            for (let i = 0; i < content.length; i++) {
+                const char = content[i];
+                
+                // Handle newlines
+                if (char === '\n') {
+                    lineStart = true;
+                    inComment = false;
+                    continue;
+                }
+                
+                // Check if we're entering a comment (# at start of line)
+                if (lineStart && char === '#') {
+                    inComment = true;
+                    continue;
+                }
+                
+                // Update lineStart flag (ignore whitespace)
+                if (lineStart && char !== ' ' && char !== '\t' && char !== '#') {
+                    lineStart = false;
+                }
+                
+                // Skip everything in comments
+                if (inComment) {
+                    continue;
+                }
+                
+                // Skip content within strings
+                if (char === '"' || char === "'") {
+                    const quote = char;
+                    i++;
+                    while (i < content.length && content[i] !== quote) {
+                        if (content[i] === '\\') i++; // Skip escaped characters
+                        i++;
+                    }
+                    lineStart = false;
+                    continue;
+                }
+                
+                // Track opening brackets
+                if (char === '(' || char === '[' || char === '{') {
+                    stack.push({ char: char, pos: i });
+                }
+                
+                // Track closing brackets
+                if (char in closeBrackets) {
+                    const expected = closeBrackets[char];
+                    if (stack.length === 0 || stack[stack.length - 1].char !== expected) {
+                        // Unmatched closing bracket
+                        const line = content.substring(0, i).split('\n').length - 1;
+                        bracketErrors.push({
+                            row: line,
+                            column: 0,
+                            text: `Unmatched closing bracket '${char}'`,
+                            type: 'error'
+                        });
+                    } else {
+                        stack.pop();
+                    }
+                }
+            }
+            
+            // Check for unclosed brackets
+            if (stack.length > 0) {
+                stack.forEach(item => {
+                    const line = content.substring(0, item.pos).split('\n').length - 1;
+                    bracketErrors.push({
+                        row: line,
+                        column: 0,
+                        text: `Unclosed bracket '${item.char}'`,
+                        type: 'warning'
+                    });
+                });
+            }
+            
+            // Combine non-bracket annotations with new bracket errors
+            const allAnnotations = [...nonBracketAnnotations, ...bracketErrors];
+            editor.session.setAnnotations(allAnnotations);
+        });
+
+        // Tooltip functionality
+        const tooltip = document.getElementById('tooltip');
+        
+        editor.on('mousemove', function(e) {
+            clearTimeout(tooltipTimeout);
+            
+            tooltipTimeout = setTimeout(() => {
+                const position = e.getDocumentPosition();
+                const token = editor.session.getTokenAt(position.row, position.column);
+                
+                if (token && token.type === 'support.function.rtorrent') {
+                    const tokenValue = token.value;
+                    const doc = rtorrentDocs[tokenValue];
+                    
+                    if (doc) {
+                        let html = `<div class="tooltip-title">${doc.title}</div>`;
+                        html += `<div class="tooltip-description">${doc.description}</div>`;
+                        html += `<div class="tooltip-syntax">${doc.syntax}</div>`;
+                        if (doc.values) {
+                            html += `<div class="tooltip-values">${doc.values}</div>`;
+                        }
+                        if (doc.link) {
+                            html += `<div class="tooltip-link"><a href="${doc.link}" target="_blank">📖 Documentation</a></div>`;
+                        }
+                        
+                        tooltip.innerHTML = html;
+                        tooltip.style.display = 'block';
+                        
+                        // Position tooltip
+                        const editorRect = editor.container.getBoundingClientRect();
+                        const mouseX = e.clientX;
+                        const mouseY = e.clientY;
+                        
+                        tooltip.style.left = (mouseX + 15) + 'px';
+                        tooltip.style.top = (mouseY + 15) + 'px';
+                        
+                        // Adjust if tooltip goes off screen
+                        setTimeout(() => {
+                            const tooltipRect = tooltip.getBoundingClientRect();
+                            if (tooltipRect.right > window.innerWidth) {
+                                tooltip.style.left = (mouseX - tooltipRect.width - 15) + 'px';
+                            }
+                            if (tooltipRect.bottom > window.innerHeight) {
+                                tooltip.style.top = (mouseY - tooltipRect.height - 15) + 'px';
+                            }
+                        }, 0);
+                    } else {
+                        tooltip.style.display = 'none';
+                    }
+                } else {
+                    tooltip.style.display = 'none';
+                }
+            }, 300);
+        });
+        
+        editor.on('mouseout', function() {
+            clearTimeout(tooltipTimeout);
+            tooltip.style.display = 'none';
+        });
+        
+        editor.container.addEventListener('scroll', function() {
+            tooltip.style.display = 'none';
+        });
+
+        // Auto-save functionality
+        function autoSave() {
+            const content = editor.getValue();
+            
+            // Only save if content has changed
+            if (content === lastSavedContent) return;
+            
+            try {
+                localStorage.setItem(AUTOSAVE_KEY, content);
+                lastSavedContent = content;
+                
+                // Show indicator
+                const indicator = document.getElementById('autoSaveIndicator');
+                indicator.style.display = 'block';
+                setTimeout(() => {
+                    indicator.style.display = 'none';
+                }, 2000);
+                
+                // Save to history every 5 minutes of changes
+                saveToHistory(content);
+            } catch (e) {
+                console.error('Auto-save failed:', e);
+            }
+        }
+        
+        function saveToHistory(content) {
+            try {
+                let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+                
+                // Check if content is different from last history item
+                if (history.length > 0 && history[0].content === content) return;
+                
+                const version = {
+                    content: content,
+                    timestamp: Date.now(),
+                    size: new Blob([content]).size
+                };
+                
+                history.unshift(version);
+                
+                // Keep only MAX_HISTORY_ITEMS
+                if (history.length > MAX_HISTORY_ITEMS) {
+                    history = history.slice(0, MAX_HISTORY_ITEMS);
+                }
+                
+                localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+            } catch (e) {
+                console.error('History save failed:', e);
+            }
+        }
+        
+        function restoreAutoSave() {
+            try {
+                const saved = localStorage.getItem(AUTOSAVE_KEY);
+                const t = translations[currentLang];
+                
+                if (saved && saved.trim()) {
+                    editor.setValue(saved, -1);
+                    lastSavedContent = saved;
+                    showToast(t.autoSaveRestored, 'success');
+                    checkAutoSaveAvailable();
+                }
+            } catch (e) {
+                console.error('Restore failed:', e);
+            }
+        }
+        
+        function checkAutoSaveAvailable() {
+            try {
+                const saved = localStorage.getItem(AUTOSAVE_KEY);
+                const btnRestore = document.getElementById('btnRestore');
+                const currentContent = editor.getValue();
+                
+                if (!btnRestore) return;
+                
+                // Show restore button only if auto-save exists and is different from current
+                if (saved && saved.trim() && saved !== currentContent) {
+                    btnRestore.style.display = 'inline-block';
+                    // Update text with current language
+                    const t = translations[currentLang] || translations['en'];
+                    if (t.btnRestore) btnRestore.innerHTML = t.btnRestore;
+                } else {
+                    btnRestore.style.display = 'none';
+                }
+            } catch (e) {
+                console.error('Check auto-save failed:', e);
+            }
+        }
+        
+        let historyModalEscHandler = null;
+        
+        function showVersionHistory() {
+            const modal = document.getElementById('historyModal');
+            const body = document.getElementById('historyModalBody');
+            const t = translations[currentLang];
+            
+            // Add ESC key handler
+            if (historyModalEscHandler) {
+                document.removeEventListener('keydown', historyModalEscHandler);
+            }
+            historyModalEscHandler = function(e) {
+                if (e.key === 'Escape') {
+                    closeHistoryModal();
+                }
+            };
+            document.addEventListener('keydown', historyModalEscHandler);
+            
+            document.getElementById('historyModalTitle').textContent = t.historyTitle;
+            
+            try {
+                const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+                const currentContent = editor.getValue();
+                
+                if (history.length === 0) {
+                    body.innerHTML = `<p style="text-align: center; color: #858585;">${t.historyEmpty}</p>`;
+                } else {
+                    let html = '';
+                    history.forEach((version, index) => {
+                        const date = new Date(version.timestamp);
+                        const isCurrent = version.content === currentContent;
+                        const preview = version.content.split('\n')[0].substring(0, 80);
+                        const sizeKB = (version.size / 1024).toFixed(1);
+                        
+                        html += `
+                            <div class="version-item ${isCurrent ? 'current' : ''}" onclick="previewVersion(${index})">
+                                <div class="version-header">
+                                    <span class="version-date">${date.toLocaleString(currentLang)}${isCurrent ? ' (' + t.historyCurrent + ')' : ''}</span>
+                                    <span class="version-size">${sizeKB} KB</span>
+                                </div>
+                                <div class="version-preview">${preview}...</div>
+                                <div class="version-actions">
+                                    <button class="secondary" onclick="event.stopPropagation(); restoreVersion(${index})">${t.historyRestore}</button>
+                                    <button class="secondary" onclick="event.stopPropagation(); deleteVersion(${index})">${t.historyDelete}</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    body.innerHTML = html;
+                }
+                
+                modal.style.display = 'flex';
+            } catch (e) {
+                console.error('History load failed:', e);
+                showToast('Error loading history', 'error');
+            }
+        }
+        
+        function closeHistoryModal() {
+            document.getElementById('historyModal').style.display = 'none';
+            // Remove ESC handler when modal closes
+            if (historyModalEscHandler) {
+                document.removeEventListener('keydown', historyModalEscHandler);
+                historyModalEscHandler = null;
+            }
+        }
+        
+        // Confirm modal
+        let confirmModalCallback = null;
+        let confirmModalEscHandler = null;
+        
+        function showConfirmModal(message) {
+            return new Promise((resolve) => {
+                const t = translations[currentLang];
+                const modal = document.getElementById('confirmModal');
+                const title = document.getElementById('confirmModalTitle');
+                const body = document.getElementById('confirmModalBody');
+                const btnOk = document.getElementById('btnConfirmOk');
+                const btnCancel = document.getElementById('btnConfirmCancel');
+                
+                title.textContent = t.confirmTitle || 'Confirm Action';
+                body.textContent = message;
+                btnOk.textContent = t.btnOk || 'OK';
+                btnCancel.textContent = t.btnCancel || 'Cancel';
+                
+                confirmModalCallback = resolve;
+                
+                // Add ESC/Enter key handler
+                if (confirmModalEscHandler) {
+                    document.removeEventListener('keydown', confirmModalEscHandler);
+                }
+                confirmModalEscHandler = function(e) {
+                    if (e.key === 'Escape') {
+                        closeConfirmModal(false);
+                    } else if (e.key === 'Enter') {
+                        closeConfirmModal(true);
+                    }
+                };
+                document.addEventListener('keydown', confirmModalEscHandler);
+                
+                modal.style.display = 'flex';
+                
+                // Set focus on OK button so Enter key works immediately
+                setTimeout(() => btnOk.focus(), 50);
+            });
+        }
+        
+        function closeConfirmModal(result) {
+            document.getElementById('confirmModal').style.display = 'none';
+            
+            // Remove ESC handler
+            if (confirmModalEscHandler) {
+                document.removeEventListener('keydown', confirmModalEscHandler);
+                confirmModalEscHandler = null;
+            }
+            
+            if (confirmModalCallback) {
+                confirmModalCallback(result);
+                confirmModalCallback = null;
+            }
+        }
+        
+        function previewVersion(index) {
+            try {
+                const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+                if (history[index]) {
+                    // Could implement a preview pane here
+                    console.log('Preview version:', index);
+                }
+            } catch (e) {
+                console.error('Preview failed:', e);
+            }
+        }
+        
+        function restoreVersion(index) {
+            const t = translations[currentLang];
+            if (!confirm(t.historyRestoreConfirm)) return;
+            
+            try {
+                const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+                if (history[index]) {
+                    editor.setValue(history[index].content, -1);
+                    lastSavedContent = history[index].content;
+                    closeHistoryModal();
+                    showToast(t.historyRestored, 'success');
+                    autoSave(); // Save as new version
+                }
+            } catch (e) {
+                console.error('Restore failed:', e);
+                showToast('Error restoring version', 'error');
+            }
+        }
+        
+        function deleteVersion(index) {
+            const t = translations[currentLang];
+            if (!confirm(t.historyDeleteConfirm)) return;
+            
+            try {
+                let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+                history.splice(index, 1);
+                localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+                showVersionHistory(); // Refresh
+                showToast(t.historyDeleted, 'success');
+            } catch (e) {
+                console.error('Delete failed:', e);
+                showToast('Error deleting version', 'error');
+            }
+        }
+        
+        // Close modal on outside click
+        document.getElementById('historyModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeHistoryModal();
+            }
+        });
+        
+        // Start auto-save (every 30 seconds)
+        autoSaveInterval = setInterval(autoSave, 30000);
+        
+        // Save on changes (debounced)
+        let changeTimeout;
+        editor.session.on('change', function() {
+            clearTimeout(changeTimeout);
+            changeTimeout = setTimeout(() => {
+                autoSave();
+                checkAutoSaveAvailable();
+            }, 2000);
+        });
+        
+        // Check for auto-save on load
+        window.addEventListener('load', function() {
+            setTimeout(checkAutoSaveAvailable, 500);
+        });
+
+        // Keyboard shortcut: Ctrl+S to save
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                saveFileToServer();
+            }
+            // F4 → Open find dialog (Ctrl+F)
+            else if (e.key === 'F4' && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                e.preventDefault();
+                editor.execCommand('find');
+            }
+            // F3 → Find next
+            else if (e.key === 'F3' && !e.shiftKey) {
+                e.preventDefault();
+                editor.execCommand('findnext');
+            }
+            // Shift+F3 → Find previous
+            else if (e.key === 'F3' && e.shiftKey) {
+                e.preventDefault();
+                editor.execCommand('findprevious');
+            }
+        });
+
+        editor.session.selection.on('changeCursor', updateLineInfo);
+
+        // Context menu
+        const contextMenu = document.getElementById('contextMenu');
+        
+        editor.container.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            
+            // Show menu first to calculate its height
+            contextMenu.style.display = 'block';
+            contextMenu.style.left = e.pageX + 'px';
+            contextMenu.style.top = e.pageY + 'px';
+            
+            // Get menu dimensions
+            const menuRect = contextMenu.getBoundingClientRect();
+            const viewportHeight = window.innerHeight;
+            const viewportWidth = window.innerWidth;
+            
+            // Adjust vertical position if menu goes off bottom
+            if (menuRect.bottom > viewportHeight) {
+                const newTop = e.pageY - menuRect.height;
+                contextMenu.style.top = Math.max(0, newTop) + 'px';
+            }
+            
+            // Adjust horizontal position if menu goes off right
+            if (menuRect.right > viewportWidth) {
+                const newLeft = e.pageX - menuRect.width;
+                contextMenu.style.left = Math.max(0, newLeft) + 'px';
+            }
+        });
+        
+        document.addEventListener('click', function() {
+            contextMenu.style.display = 'none';
+        });
+
+        // Snippets
+        const snippets = {
+            watch: `\n## Watch directory
+schedule2 = watch_directory_name, 10, 10, ((load.start_verbose, (cat, (cfg.watch), "subdirectory/*.torrent")))
+`,
+            schedule: `\n## Scheduled task
+schedule2 = task_name, start_delay, interval, "command_to_execute"
+`,
+            ratio: `\n## Ratio group
+group.seeding.ratio.command = seeding_group, "d.stop="
+ratio.min.set = 200
+ratio.max.set = 300
+ratio.upload.set = 20M
+`,
+            print: `\n## Print statement
+print = "Hello from config.d!"
+`,
+            logging: `\n## Logging configuration
+log.open_file = "rtorrent", (cat, (cfg.logs), "rtorrent.log")
+log.add_output = "info", "rtorrent"
+log.add_output = "dht_debug", "rtorrent"
+`,
+            bandwidth: `\n## Bandwidth limits
+throttle.global_down.max_rate.set_kb = 0
+throttle.global_up.max_rate.set_kb = 0
+throttle.max_peers.normal.set = 60
+throttle.max_peers.seed.set = 80
+throttle.max_uploads.set = 15
+`,
+            scgi: `\n## SCGI/XMLRPC setup
+network.scgi.open_local = (cat, (session.path), rpc.socket)
+execute.nothrow = chmod, 770, (cat, (session.path), rpc.socket)
+`,
+            method: `\n## Custom method
+method.insert = method_name, simple|private, "command_here"
+`,
+            event: `\n## Event handler
+method.set_key = event.download.finished, action_name, "command_to_execute"
+`
+        };
+
+        function insertSnippet(type) {
+            const snippet = snippets[type];
+            if (snippet) {
+                editor.insert(snippet);
+                editor.focus();
+            }
+        }
+
+        function commentSelection() {
+            const range = editor.getSelectionRange();
+            const session = editor.session;
+            
+            for (let row = range.start.row; row <= range.end.row; row++) {
+                const line = session.getLine(row);
+                if (!line.trim().startsWith('#')) {
+                    session.replace({
+                        start: {row: row, column: 0},
+                        end: {row: row, column: 0}
+                    }, '# ');
+                }
+            }
+            editor.focus();
+        }
+
+        function uncommentSelection() {
+            const range = editor.getSelectionRange();
+            const session = editor.session;
+            
+            for (let row = range.start.row; row <= range.end.row; row++) {
+                const line = session.getLine(row);
+                const match = line.match(/^(\s*)#\s?/);
+                if (match) {
+                    session.replace({
+                        start: {row: row, column: match[1].length},
+                        end: {row: row, column: match[0].length}
+                    }, '');
+                }
+            }
+            editor.focus();
+        }
+
+        function lookupSelection() {
+            const selectedText = editor.getSelectedText().trim();
+            if (selectedText) {
+                const url = `https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html?highlight=${encodeURIComponent(selectedText)}`;
+                window.open(url, '_blank');
+            }
+        }
+
+        function printEditor() {
+            const content = editor.getValue();
+            
+            // Create a hidden iframe for printing
+            const printFrame = document.createElement('iframe');
+            printFrame.style.position = 'absolute';
+            printFrame.style.width = '0';
+            printFrame.style.height = '0';
+            printFrame.style.border = 'none';
+            document.body.appendChild(printFrame);
+            
+            const frameDoc = printFrame.contentWindow.document;
+            frameDoc.open();
+            frameDoc.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>rtorrent.rc</title>
+                    <style>
+                        @page {
+                            margin: 1cm;
+                        }
+                        body {
+                            margin: 0;
+                            padding: 0;
+                            font-family: 'Courier New', Consolas, monospace;
+                            font-size: 10pt;
+                            line-height: 1.4;
+                        }
+                        pre {
+                            margin: 0;
+                            white-space: pre-wrap;
+                            word-wrap: break-word;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <pre>${content.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/&/g, '&amp;')}</pre>
+                </body>
+                </html>
+            `);
+            frameDoc.close();
+            
+            // Wait for content to load, then print
+            setTimeout(() => {
+                printFrame.contentWindow.focus();
+                printFrame.contentWindow.print();
+                
+                // Remove iframe after printing
+                setTimeout(() => {
+                    document.body.removeChild(printFrame);
+                }, 100);
+            }, 250);
+        }
+
+        function loadFromFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                editor.setValue(e.target.result, -1);
+                const t = translations[currentLang];
+                document.getElementById('status').textContent = `${file.name} ${t.statusFileLoaded}`;
+                setTimeout(() => {
+                    document.getElementById('status').textContent = t.statusReady;
+                }, 2000);
+            };
+            reader.onerror = function() {
+                const t = translations[currentLang];
+                document.getElementById('status').textContent = t.statusErrLoad;
+                document.getElementById('status').style.background = '#c72e0f';
+                setTimeout(() => {
+                    document.getElementById('status').textContent = t.statusReady;
+                    document.getElementById('status').style.background = '#007acc';
+                }, 3000);
+            };
+            reader.readAsText(file);
+        }
+
+        async function loadTemplate() {
+            const t = translations[currentLang];
+            const confirmed = await showConfirmModal(t.confirmLoadTemplate);
+            if (!confirmed) return;
+            
+            try {
+                document.getElementById('status').textContent = 'Loading template...';
+                
+                // Use CONFIG for template path
+                const data = await readFileFromServer(CONFIG.paths.templateFile);
+                
+                if (data.success && data.content !== undefined) {
+                    editor.setValue(data.content, -1);
+                    editor.clearSelection();
+                    editor.gotoLine(1);
+                    document.getElementById('status').textContent = t.statusLoaded;
+                    setTimeout(() => {
+                        document.getElementById('status').textContent = t.statusReady;
+                    }, 2000);
+                } else {
+                    throw new Error(data.error || 'Template not found');
+                }
+            } catch (err) {
+                console.error('Template load error:', err);
+                document.getElementById('status').textContent = 'Error: ' + err.message;
+                document.getElementById('status').style.background = '#dc3545';
+                setTimeout(() => {
+                    document.getElementById('status').textContent = t.statusReady;
+                    document.getElementById('status').style.background = '#28a745';
+                }, 3000);
+            }
+        }
+
+        // Load file from FritzBox filesystem via CGI
+        async function loadFileFromServer() {
+            const t = translations[currentLang];
+            
+            // Show confirmation only if editor has content (not on first load)
+            if (editor.getValue().trim().length > 0) {
+                const confirmed = await showConfirmModal(t.confirmReload);
+                if (!confirmed) return;
+            }
+            
+            const filePathParam = getFilePathFromURL();
+            let filePath = filePathParam || CONFIG.paths.defaultFile;
+            
+            // Support relative path - if it's just '.rtorrent.rc', pass it as-is
+            // The CGI will expand it using RTORRENT_BASEDIR
+            console.log('URL file parameter:', filePathParam);
+            console.log('Using file path:', filePath);
+            
+            try {
+                document.getElementById('status').textContent = `Loading ${filePath}...`;
+                document.getElementById('status').style.background = '#856404';
+                
+                // Use utility function with CONFIG
+                const data = await readFileFromServer(filePath);
+                
+                if (data.success && data.content) {
+                    editor.setValue(data.content, -1);
+                    document.getElementById('status').textContent = `${data.file} loaded ✓`;
+                    document.getElementById('status').style.background = '#198754';
+                    setTimeout(() => {
+                        document.getElementById('status').textContent = t.statusReady;
+                        document.getElementById('status').style.background = '#007acc';
+                    }, 2000);
+                } else {
+                    throw new Error(data.error || 'Failed to load file');
+                }
+            } catch (error) {
+                console.error('Error loading file:', error);
+                document.getElementById('status').textContent = 'Error: ' + error.message;
+                document.getElementById('status').style.background = '#c72e0f';
+                setTimeout(() => {
+                    document.getElementById('status').textContent = t.statusReady;
+                    document.getElementById('status').style.background = '#007acc';
+                }, 3000);
+            }
+        }
+
+        // Save file to FritzBox filesystem via CGI
+        async function saveFileToServer() {
+            const t = translations[currentLang];
+            
+            // Show confirmation before saving
+            const confirmed = await showConfirmModal(t.confirmSave);
+            if (!confirmed) return;
+            
+            const filePath = getFilePathFromURL() || CONFIG.paths.defaultFile;
+            const content = editor.getValue();
+            
+            try {
+                document.getElementById('status').textContent = 'Saving file...';
+                
+                // Use utility function with CONFIG
+                const data = await writeFileToServer(filePath, content);
+                
+                if (data.success) {
+                    document.getElementById('status').textContent = `${data.file} saved ✓`;
+                    document.getElementById('status').style.background = '#198754';
+                    setTimeout(() => {
+                        document.getElementById('status').textContent = t.statusReady;
+                        document.getElementById('status').style.background = '#007acc';
+                    }, 2000);
+                } else {
+                    throw new Error(data.error || 'Failed to save file');
+                }
+            } catch (error) {
+                console.error('Error saving file:', error);
+                document.getElementById('status').textContent = 'Error: ' + error.message;
+                document.getElementById('status').style.background = '#c72e0f';
+                setTimeout(() => {
+                    document.getElementById('status').textContent = t.statusReady;
+                    document.getElementById('status').style.background = '#007acc';
+                }, 3000);
+            }
+        }
+
+        // Get file path from URL parameters
+        function getFilePathFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('file');
+        }
+
+        function downloadConfig() {
+            // Check if we're on FritzBox (has file parameter or running from /usr/mww/)
+            const filePath = getFilePathFromURL();
+            if (filePath || window.location.pathname.includes('/usr/mww/')) {
+                // Save to server
+                saveFileToServer();
+            } else {
+                // Download to local browser
+                const content = editor.getValue();
+                const blob = new Blob([content], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = '.rtorrent.rc';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                const t = translations[currentLang];
+                document.getElementById('status').textContent = t.statusDownloaded;
+                setTimeout(() => {
+                    document.getElementById('status').textContent = t.statusReady;
+                }, 2000);
+            }
+        }
+
+        function validateConfig() {
+            const content = editor.getValue();
+            const t = translations[currentLang];
+            const lines = content.split('\n');
+            let errors = [];
+            let warnings = [];
+            let continuedLine = false;
+            let fullCommand = '';
+            let commandStartLine = 0;
+            
+            // Check if content is empty
+            if (!content || content.trim().length === 0) {
+                errors.push('Empty file');
+                document.getElementById('status').textContent = '1 ' + t.statusValidErr;
+                document.getElementById('status').style.background = '#c72e0f';
+                showToast('Empty file', 'error');
+                setTimeout(() => {
+                    document.getElementById('status').textContent = t.statusReady;
+                    document.getElementById('status').style.background = '#007acc';
+                }, 3000);
+                return;
+            }
+            
+            // Get syntax errors from Ace Editor
+            const annotations = editor.session.getAnnotations() || [];
+            annotations.forEach(ann => {
+                const msg = `${t.lineCol} ${ann.row + 1}: ${ann.text}`;
+                if (ann.type === 'error') {
+                    errors.push(msg);
+                } else if (ann.type === 'warning') {
+                    warnings.push(msg);
+                }
+            });
+            
+            const rtorrentCommands = [
+                "method.insert", "method.set", "session.path.set", "directory.default.set",
+                "network.port_range.set", "network.port_random.set", "network.http.max_open.set",
+                "network.bind_address.set", "network.receive_buffer.size", "network.receive_buffer.size.set",
+                "network.send_buffer.size", "network.send_buffer.size.set",
+                "dht.mode.set", "protocol.pex.set", "throttle.max_uploads.set",
+                "trackers.use_udp.set", "pieces.memory.max.set", "encoding.add",
+                "system.umask.set", "system.cwd.set", "execute.throw", "execute.nothrow",
+                "log.execute", "log.open_file", "log.add_output", "schedule2",
+                "close_low_diskspace", "print", "load.verbose", "load.start_verbose",
+                "throttle.global_down.max_rate.set_kb", "throttle.global_up.max_rate.set_kb",
+                "method.insert=d.down.sequential", "method.insert=d.down.sequential.set"
+            ];
+            
+            // Valid keywords that can appear standalone
+            const validKeywords = [
+                "yes", "no", "enable", "disable", "true", "false", "on", "off", "auto", "private", "const",
+                "public", "simple", "value", "string", "allow_incoming", "try_outgoing",
+                "enable_retry", "prefer_plaintext", "require", "require_RC4", "UTF-8",
+                "seeding", "greater", "qwerty", "cat", "if", "sh", "mkdir", "echo", "chmod",
+                // Command names that can appear as schedule names or identifiers
+                "schedule2", "schedule", "print", "watch_load", "watch_start", "monitor_diskspace",
+                // Common shell flags
+                "c", "p", "v", "r", "f",
+                // Log levels
+                "critical", "error", "warn", "notice", "info", "debug",
+                // Encoding
+                "UTF",
+                // Method attributes (can be combined with |)
+                "private|const", "private|simple", "value|const", "simple|private"
+            ];
+            
+            lines.forEach((line, idx) => {
+                const trimmed = line.trim();
+                
+                // Handle continued lines
+                if (continuedLine) {
+                    fullCommand += ' ' + trimmed.replace(/\\$/, '').trim();
+                    continuedLine = trimmed.endsWith('\\');
+                    
+                    if (!continuedLine) {
+                        validateCommand(fullCommand, commandStartLine, errors, warnings, rtorrentCommands, validKeywords);
+                        fullCommand = '';
+                    }
+                    return;
+                }
+                
+                // Skip empty lines and comments
+                if (!trimmed || trimmed.startsWith('#')) {
+                    return;
+                }
+                
+                // Check for continued lines
+                if (trimmed.endsWith('\\')) {
+                    continuedLine = true;
+                    commandStartLine = idx + 1;
+                    fullCommand = trimmed.replace(/\\$/, '').trim();
+                    return;
+                }
+                
+                validateCommand(trimmed, idx + 1, errors, warnings, rtorrentCommands, validKeywords);
+            });
+            
+            const totalIssues = errors.length + warnings.length;
+            
+            if (totalIssues === 0) {
+                document.getElementById('status').textContent = t.statusValidOk;
+                document.getElementById('status').style.background = '#16825d';
+                showToast('✓ Validation successful!', 'success');
+            } else {
+                const allIssues = [...errors, ...warnings];
+                document.getElementById('status').textContent = `${totalIssues} ${t.statusValidErr}`;
+                document.getElementById('status').style.background = errors.length > 0 ? '#c72e0f' : '#e5a50a';
+                showToast(allIssues.join('\n'), errors.length > 0 ? 'error' : 'warning');
+            }
+            
+            setTimeout(() => {
+                document.getElementById('status').textContent = t.statusReady;
+                document.getElementById('status').style.background = '#007acc';
+            }, 3000);
+        }
+        
+        function validateCommand(command, lineNum, errors, warnings, rtorrentCommands, validKeywords) {
+            command = command.trim();
+            const t = translations[currentLang];
+            
+            // Skip if line is just a value in parentheses (like function arguments)
+            if (command.match(/^\(.*\)$/)) return;
+            
+            // Check if it starts with a known rtorrent command
+            const startsWithRtorrentCommand = rtorrentCommands.some(cmd => command.startsWith(cmd));
+            
+            if (startsWithRtorrentCommand && !command.includes('=')) {
+                errors.push(`${t.lineCol} ${lineNum}: ${t.validErrMsg}`);
+                return;
+            }
+            
+            // Don't validate lines that are clearly shell commands (contain shell operators)
+            if (command.match(/["'`${}]/)) {
+                // This is likely a shell command or string, skip detailed validation
+                return;
+            }
+            
+            // Check for unknown identifiers (not in strings)
+            const withoutStrings = command.replace(/"[^"]*"/g, '""');
+            const withoutParens = withoutStrings.replace(/\([^)]*\)/g, '()');
+            
+            // Extract words (identifiers) - only check words not followed by =
+            const tokens = withoutParens.split(/[\s,=\(\)\[\]]+/).filter(t => t.length > 0);
+            
+            for (const word of tokens) {
+                // Skip numbers, operators, and empty strings
+                if (!word || /^\d+$/.test(word) || /^[0-9-]+$/.test(word)) continue;
+                
+                // Skip if it's a path-like string
+                if (word.includes('/') || word.includes('.torrent')) continue;
+                
+                // Skip size units (e.g., 16M, 4M, 512K, 2G)
+                if (/^\d+[KMG]$/.test(word)) continue;
+                
+                // Skip IP addresses (e.g., 0.0.0.0, 127.0.0.1)
+                if (/^\d+\.\d+\.\d+\.\d+$/.test(word)) continue;
+                
+                // Skip IP:port combinations (e.g., 127.0.0.1:5000, 0.0.0.0:8080)
+                if (/^\d+\.\d+\.\d+\.\d+:\d+$/.test(word)) continue;
+                
+                // Skip pipe-separated attributes (e.g., "private|const", "value|const")
+                if (word.includes('|')) {
+                    const parts = word.split('|');
+                    const allPartsValid = parts.every(p => 
+                        ['private', 'const', 'public', 'simple', 'value', 'string'].includes(p)
+                    );
+                    if (allPartsValid) continue;
+                }
+                
+                // Check if it contains dots (namespace tokens)
+                if (word.includes('.')) {
+                    const prefix = word.split('.')[0];
+                    const isKnownPrefix = ['method', 'session', 'directory', 'network', 'dht', 
+                                          'protocol', 'throttle', 'trackers', 'pieces', 'encoding',
+                                          'system', 'execute', 'log', 'view', 'keys', 'load',
+                                          'cfg', 'd', 'group', 'ratio'].includes(prefix);
+                    if (!isKnownPrefix) {
+                        warnings.push(`${t.lineCol} ${lineNum}: Unknown token "${word}"`);
+                    }
+                } else {
+                    // Check standalone words - be more lenient
+                    const isValid = validKeywords.includes(word) ||
+                                   validKeywords.includes(word.toLowerCase()) ||
+                                   rtorrentCommands.some(cmd => cmd.includes(word)) ||
+                                   ['cfg', 'd', 'rpc', 'socket', 'log', 'torrent'].includes(word) ||
+                                   word.length === 1; // Single letter identifiers (like -c flag)
+                    
+                    if (!isValid) {
+                        warnings.push(`${t.lineCol} ${lineNum}: Unknown identifier "${word}"`);
+                    }
+                }
+            }
+        }
+
+        // Initialize language
+        currentLang = detectLanguage();
+        
+        // Update UI after DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            updateUI();
+            // Auto-load file - if no file parameter, use .rtorrent.rc as default
+            const filePath = getFilePathFromURL();
+            if (filePath || window.location.pathname.includes('/usr/mww/') || window.location.pathname.includes('/rtorrent/')) {
+                // We're on FritzBox - load the file (.rtorrent.rc if no parameter specified)
+                loadFileFromServer();
+            }
+        });
+        
+        // Also update immediately for synchronous execution
+        if (document.readyState === 'loading') {
+            // Do nothing, wait for DOMContentLoaded
+        } else {
+            // DOM already loaded
+            updateUI();
+            // Auto-load file - if no file parameter, use .rtorrent.rc as default
+            const filePath = getFilePathFromURL();
+            if (filePath || window.location.pathname.includes('/usr/mww/') || window.location.pathname.includes('/rtorrent/')) {
+                // We're on FritzBox - load the file (.rtorrent.rc if no parameter specified)
+                loadFileFromServer();
+            }
+        }
+        
+        // Load mock backend if in demo mode (but NOT in freetz-ng environment)
+        (function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const isFritzBox = window.location.pathname.includes('/usr/mww/') || 
+                               window.location.pathname.includes('/rtorrent/') ||
+                               window.location.hostname.includes('fritz');
+            
+            // Only activate demo mode if explicitly requested AND not in freetz-ng
+            if (urlParams.get('demo') === '1' && !isFritzBox) {
+                const script = document.createElement('script');
+                script.src = 'demo/mock-backend.js';
+                script.onerror = function() {
+                    // Try alternative path (if accessed from demo/ directory)
+                    script.src = 'mock-backend.js';
+                };
+                document.head.appendChild(script);
+                
+                // Auto-load sample file when mock backend is ready
+                window.addEventListener('mockBackendReady', function() {
+                    console.log('Mock backend ready, loading sample config...');
+                    loadFileFromServer();
+                });
+            }
+        })();
+    </script>
+</body>
+</html>

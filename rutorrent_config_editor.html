@@ -1,0 +1,1848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ruTorrent Configuration Editor</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        .toolbar {
+            background: #252526;
+            padding: 10px 20px;
+            border-bottom: 1px solid #3e3e42;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .toolbar h1 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 500;
+        }
+        
+        .toolbar-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .file-selector {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+        
+        select, button {
+            background: #3c3c3c;
+            color: #d4d4d4;
+            border: 1px solid #3e3e42;
+            padding: 6px 12px;
+            border-radius: 3px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        
+        select:hover, button:hover {
+            background: #505050;
+        }
+        
+        button.primary {
+            background: #0e639c;
+            color: white;
+            border-color: #0e639c;
+        }
+        
+        button.primary:hover {
+            background: #1177bb;
+        }
+        
+        #editor {
+            flex: 1;
+            width: 100%;
+        }
+        
+        .status-bar {
+            background: #007acc;
+            color: white;
+            padding: 5px 20px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .tooltip {
+            position: fixed;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border: 1px solid #007acc;
+            border-radius: 4px;
+            padding: 12px;
+            max-width: 450px;
+            z-index: 3000;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        
+        .tooltip-title {
+            color: #4ec9b0;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        
+        .tooltip-description {
+            margin-bottom: 8px;
+            color: #cccccc;
+        }
+        
+        .tooltip-syntax {
+            background: #252526;
+            padding: 6px 8px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            margin: 6px 0;
+            color: #ce9178;
+        }
+        
+        .tooltip-values {
+            margin-top: 6px;
+            font-size: 11px;
+            color: #9cdcfe;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #323233;
+            color: #d4d4d4;
+            padding: 12px 20px;
+            border-radius: 4px;
+            border-left: 4px solid #007acc;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            z-index: 2000;
+            display: none;
+            max-width: 500px;
+            max-height: 60vh;
+            overflow-y: auto;
+            animation: slideIn 0.3s ease-out;
+            white-space: pre-line;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            line-height: 1.6;
+        }
+        
+        .toast.error {
+            border-left-color: #c72e0f;
+        }
+        
+        .toast.success {
+            border-left-color: #16825d;
+        }
+        
+        .toast.warning {
+            border-left-color: #e5a50a;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Modal styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            z-index: 4000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: #252526;
+            border: 1px solid #3e3e42;
+            border-radius: 6px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #3e3e42;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: #d4d4d4;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-close:hover {
+            background: #3e3e42;
+            border-radius: 3px;
+        }
+        
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        /* Responsive design for small viewports */
+        @media (max-width: 1200px) {
+            .toolbar {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            
+            .toolbar h1 {
+                font-size: 16px;
+                flex-basis: 100%;
+                margin-bottom: 5px;
+            }
+            
+            .toolbar-actions {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            
+            button {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            
+            select {
+                padding: 5px 8px;
+                font-size: 12px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .toolbar {
+                padding: 8px 10px;
+            }
+            
+            .toolbar h1 {
+                font-size: 14px;
+            }
+            
+            .toolbar-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+            
+            button {
+                padding: 5px 10px;
+                font-size: 11px;
+                flex: 1 1 auto;
+                min-width: fit-content;
+            }
+            
+            select {
+                padding: 5px 8px;
+                font-size: 11px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .toolbar h1 {
+                font-size: 13px;
+            }
+            
+            button {
+                padding: 5px 8px;
+                font-size: 10px;
+                white-space: nowrap;
+            }
+            
+            .toolbar-actions {
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="toolbar">
+            <h1 id="toolbarTitle">📁 ruTorrent Configuration Editor</h1>
+            <div class="toolbar-actions">
+                <div class="file-selector">
+                    <label for="fileType" style="font-size: 13px;">File:</label>
+                    <select id="fileType" onchange="switchFile(this.value)">
+                        <option value="config">config.php</option>
+                        <option value="freetz_config">freetz_config.php</option>
+                        <option value="access">access.ini</option>
+                        <option value="plugins">plugins.ini</option>
+                    </select>
+                </div>
+                <select id="langSelector" onchange="changeLanguage(this.value)">
+                    <option value="auto">🌐 Auto</option>
+                    <option value="en">English</option>
+                    <option value="it">Italiano</option>
+                    <option value="de">Deutsch</option>
+                    <option value="fr">Français</option>
+                    <option value="es">Español</option>
+                </select>
+                <button onclick="loadTemplate()" id="btnLoadTemplate">📄 Load Template</button>
+                <button onclick="loadFileFromServer()" id="btnReload">🔄 Reload</button>
+                <button onclick="document.getElementById('fileInput').click()" id="btnLoadFile">📂 Load File</button>
+                <button class="primary" onclick="saveFileToServer()" id="btnSave">💾 Save</button>
+                <button onclick="downloadConfig()" id="btnDownload">💾 Download</button>
+                <button onclick="validateConfig()" id="btnValidate">✓ Validate</button>
+            </div>
+            <input type="file" id="fileInput" accept=".php,.ini,*" style="display:none" onchange="loadFromFile(event)">
+        </div>
+        
+        <div id="editor"><?php
+// ruTorrent config.php
+// Edit your configuration here
+
+$httpUserAgent = 'Mozilla/5.0';
+$httpTimeOut = 30;
+$httpUseGzip = true;
+
+$rpcTimeOut = 5;
+$rpcLogCalls = false;
+$rpcLogFaults = true;
+
+$scgi_port = 5000;
+$scgi_host = "127.0.0.1";
+
+// For UNIX socket:
+// $scgi_port = 0;
+// $scgi_host = "unix:///tmp/rpc.socket";
+?></div>
+        
+        <div class="status-bar">
+            <span id="status">Ready</span>
+            <span id="line-info">Line 1, Col 1</span>
+        </div>
+        
+        <div id="tooltip" class="tooltip"></div>
+        <div id="toast" class="toast"></div>
+        
+        <div id="confirmModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="confirmModalTitle">⚠️ Confirm</h2>
+                    <button class="modal-close" onclick="closeConfirmModal(false)">×</button>
+                </div>
+                <div class="modal-body" id="confirmModalBody" style="padding: 30px 20px;">
+                    <!-- Populated dynamically -->
+                </div>
+                <div style="padding: 0 20px 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                    <button onclick="closeConfirmModal(false)" id="btnConfirmCancel">Cancel</button>
+                    <button class="primary" onclick="closeConfirmModal(true)" id="btnConfirmOk">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.4/ace.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.4/ext-language_tools.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.4/mode-php.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.4/mode-ini.js"></script>
+    <script>
+        // ========================================
+        // CONFIGURATION SECTION
+        // ========================================
+        // Centralized configuration for paths, AJAX endpoints, and options
+        
+        const CONFIG = {
+            // File paths
+            paths: {
+                // Base paths for ruTorrent configuration files
+                externalBase: '/mod/external/usr/mww/rutorrent/conf',
+                standardBase: '/usr/mww/rutorrent/conf',
+                
+                // File names
+                files: {
+                    config: 'config.php',
+                    freetzConfig: 'freetz_config.php',
+                    access: 'access.ini',
+                    plugins: 'plugins.ini'
+                },
+                
+                // Template suffix
+                templateSuffix: '.template',
+                
+                // Accepted file extensions for upload
+                acceptedExtensions: '.php,.ini,*'
+            },
+            
+            // AJAX configuration
+            ajax: {
+                cgiUrl: '/cgi-bin/conf/rtorrent',
+                ajaxParam: 'ajax',
+                ajaxValue: '1',
+                actions: {
+                    readFile: 'read_file',
+                    writeFile: 'write_file'
+                },
+                responseMarker: 'Content-Type: application/json'
+            },
+            
+            // Editor options
+            editor: {
+                theme: 'ace/theme/monokai',
+                modes: {
+                    php: 'ace/mode/php',
+                    ini: 'ace/mode/ini'
+                },
+                fontSize: '14px',
+                tabSize: 4,
+                showPrintMargin: false,
+                enableBasicAutocompletion: true,
+                enableLiveAutocompletion: true,
+                enableSnippets: true
+            },
+            
+            // File type to mode mapping
+            fileTypes: {
+                config: { mode: 'php', extension: '.php' },
+                freetz_config: { mode: 'php', extension: '.php' },
+                access: { mode: 'ini', extension: '.ini' },
+                plugins: { mode: 'ini', extension: '.ini' }
+            }
+        };
+        
+        // ========================================
+        // UTILITY FUNCTIONS
+        // ========================================
+        
+        // Parse JSON response from CGI (extracts JSON from HTML wrapper)
+        function parseAjaxResponse(text) {
+            const marker = CONFIG.ajax.responseMarker;
+            const markerPos = text.indexOf(marker);
+            
+            if (markerPos === -1) {
+                throw new Error(`Marker \"${marker}\" not found in response`);
+            }
+            
+            const searchStart = markerPos + marker.length;
+            const firstBrace = text.indexOf('{', searchStart);
+            
+            if (firstBrace === -1) {
+                throw new Error('No JSON object found after marker');
+            }
+            
+            let braceCount = 0;
+            let jsonEnd = -1;
+            
+            for (let i = firstBrace; i < text.length; i++) {
+                if (text[i] === '{') braceCount++;
+                else if (text[i] === '}') {
+                    braceCount--;
+                    if (braceCount === 0) {
+                        jsonEnd = i + 1;
+                        break;
+                    }
+                }
+            }
+            
+            if (jsonEnd === -1) {
+                throw new Error('Incomplete JSON in response');
+            }
+            
+            const jsonText = text.substring(firstBrace, jsonEnd);
+            return JSON.parse(jsonText);
+        }
+        
+        // Make AJAX request to CGI
+        async function ajaxRequest(action, params = {}) {
+            const url = CONFIG.ajax.cgiUrl;
+            const urlParams = new URLSearchParams({
+                [CONFIG.ajax.ajaxParam]: CONFIG.ajax.ajaxValue,
+                action: action,
+                ...params
+            });
+            
+            const response = await fetch(`${url}?${urlParams.toString()}`);
+            const text = await response.text();
+            
+            return parseAjaxResponse(text);
+        }
+        
+        // Read file from server
+        async function readFileFromServer(filePath) {
+            return await ajaxRequest(CONFIG.ajax.actions.readFile, { file: filePath });
+        }
+        
+        // Write file to server
+        async function writeFileToServer(filePath, content) {
+            return await ajaxRequest(CONFIG.ajax.actions.writeFile, {
+                file: filePath,
+                content: content
+            });
+        }
+        
+        // ========================================
+        // TRANSLATIONS
+        // ========================================
+        const translations = {
+            en: {
+                toolbarTitle: "📁 ruTorrent Configuration Editor",
+                btnLoadTemplate: "📄 Load Template",
+                btnReload: "🔄 Reload",
+                btnLoadFile: "📂 Load File",
+                btnSave: "💾 Save",
+                btnDownload: "💾 Download",
+                btnValidate: "✓ Validate",
+                tooltipLoadTemplate: "Load a pre-configured ruTorrent template to start with",
+                tooltipReload: "Reload the current configuration file from the server",
+                tooltipLoadFile: "Load a configuration file from your local computer",
+                tooltipSave: "Save the current configuration to the server",
+                tooltipDownload: "Download the configuration file to your computer",
+                tooltipValidate: "Check the configuration for syntax errors and warnings",
+                tooltipLangSelector: "Change the interface language",
+                statusReady: "Ready",
+                statusLoaded: "Template loaded ✓",
+                statusFileLoaded: "File loaded ✓",
+                statusDownloaded: "File downloaded ✓",
+                statusValidOk: "Validation OK ✓",
+                statusValidErr: "error(s) found",
+                lineCol: "Line",
+                confirmLoadTemplate: "Replace the current configuration with the template? Any unsaved changes will be lost.",
+                confirmReload: "Reload the configuration file from the server? Any unsaved changes will be lost.",
+                confirmSave: "Save the current configuration to the server? This will overwrite the existing configuration file.",
+                confirmTitle: "Confirm Action",
+                btnCancel: "Cancel",
+                btnOk: "OK",
+                noFileUseTemplate: "File not found on server. Use 'Load Template' button to load a template."
+            },
+            it: {
+                toolbarTitle: "📁 Editor Configurazione ruTorrent",
+                btnLoadTemplate: "📄 Carica Template",
+                btnReload: "🔄 Ricarica",
+                btnLoadFile: "📂 Carica File",
+                btnSave: "💾 Salva",
+                btnDownload: "💾 Scarica",
+                btnValidate: "✓ Valida",
+                tooltipLoadTemplate: "Carica un template pre-configurato di ruTorrent per iniziare",
+                tooltipReload: "Ricarica il file di configurazione corrente dal server",
+                tooltipLoadFile: "Carica un file di configurazione dal tuo computer locale",
+                tooltipSave: "Salva la configurazione corrente sul server",
+                tooltipDownload: "Scarica il file di configurazione sul tuo computer",
+                tooltipValidate: "Controlla la configurazione per errori di sintassi e avvisi",
+                tooltipLangSelector: "Cambia la lingua dell'interfaccia",
+                statusReady: "Pronto",
+                statusLoaded: "Template caricato ✓",
+                statusFileLoaded: "File caricato ✓",
+                statusDownloaded: "File scaricato ✓",
+                statusValidOk: "Validazione OK ✓",
+                statusValidErr: "errore/i trovato/i",
+                lineCol: "Riga",
+                confirmLoadTemplate: "Sostituire la configurazione corrente con il template? Tutte le modifiche non salvate andranno perse.",
+                confirmReload: "Ricaricare il file di configurazione dal server? Tutte le modifiche non salvate andranno perse.",
+                confirmSave: "Salvare la configurazione corrente sul server? Questo sovrascriverà il file di configurazione esistente.",
+                confirmTitle: "Conferma Azione",
+                btnCancel: "Annulla",
+                btnOk: "OK",
+                noFileUseTemplate: "File non trovato sul server. Usa il pulsante 'Carica Template' per caricare un template."
+            },
+            de: {
+                toolbarTitle: "📁 ruTorrent Konfigurations-Editor",
+                btnLoadTemplate: "📄 Vorlage Laden",
+                btnReload: "🔄 Neu Laden",
+                btnLoadFile: "📂 Datei Laden",
+                btnSave: "💾 Speichern",
+                btnDownload: "💾 Herunterladen",
+                btnValidate: "✓ Validieren",
+                tooltipLoadTemplate: "Eine vorkonfigurierte ruTorrent-Vorlage zum Starten laden",
+                tooltipReload: "Die aktuelle Konfigurationsdatei vom Server neu laden",
+                tooltipLoadFile: "Eine Konfigurationsdatei von Ihrem lokalen Computer laden",
+                tooltipSave: "Die aktuelle Konfiguration auf dem Server speichern",
+                tooltipDownload: "Die Konfigurationsdatei auf Ihren Computer herunterladen",
+                tooltipValidate: "Die Konfiguration auf Syntaxfehler und Warnungen prüfen",
+                tooltipLangSelector: "Sprache der Benutzeroberfläche ändern",
+                statusReady: "Bereit",
+                statusLoaded: "Vorlage geladen ✓",
+                statusFileLoaded: "Datei geladen ✓",
+                statusDownloaded: "Datei heruntergeladen ✓",
+                statusValidOk: "Validierung OK ✓",
+                statusValidErr: "Fehler gefunden",
+                lineCol: "Zeile",
+                confirmLoadTemplate: "Die aktuelle Konfiguration durch die Vorlage ersetzen? Alle nicht gespeicherten Änderungen gehen verloren.",
+                confirmReload: "Die Konfigurationsdatei vom Server neu laden? Alle nicht gespeicherten Änderungen gehen verloren.",
+                confirmSave: "Die aktuelle Konfiguration auf dem Server speichern? Dies wird die vorhandene Konfigurationsdatei überschreiben.",
+                confirmTitle: "Aktion Bestätigen",
+                btnCancel: "Abbrechen",
+                btnOk: "OK",
+                noFileUseTemplate: "Datei auf dem Server nicht gefunden. Verwenden Sie die Schaltfläche 'Vorlage Laden', um eine Vorlage zu laden."
+            },
+            fr: {
+                toolbarTitle: "📁 Éditeur de Configuration ruTorrent",
+                btnLoadTemplate: "📄 Charger Modèle",
+                btnReload: "🔄 Recharger",
+                btnLoadFile: "📂 Charger Fichier",
+                btnSave: "💾 Enregistrer",
+                btnDownload: "💾 Télécharger",
+                btnValidate: "✓ Valider",
+                tooltipLoadTemplate: "Charger un modèle ruTorrent pré-configuré pour commencer",
+                tooltipReload: "Recharger le fichier de configuration actuel depuis le serveur",
+                tooltipLoadFile: "Charger un fichier de configuration depuis votre ordinateur local",
+                tooltipSave: "Enregistrer la configuration actuelle sur le serveur",
+                tooltipDownload: "Télécharger le fichier de configuration sur votre ordinateur",
+                tooltipValidate: "Vérifier la configuration pour les erreurs de syntaxe et les avertissements",
+                tooltipLangSelector: "Changer la langue de l'interface",
+                statusReady: "Prêt",
+                statusLoaded: "Modèle chargé ✓",
+                statusFileLoaded: "Fichier chargé ✓",
+                statusDownloaded: "Fichier téléchargé ✓",
+                statusValidOk: "Validation OK ✓",
+                statusValidErr: "erreur(s) trouvée(s)",
+                lineCol: "Ligne",
+                confirmLoadTemplate: "Remplacer la configuration actuelle par le modèle ? Toutes les modifications non enregistrées seront perdues.",
+                confirmReload: "Recharger le fichier de configuration depuis le serveur ? Toutes les modifications non enregistrées seront perdues.",
+                confirmSave: "Enregistrer la configuration actuelle sur le serveur ? Cela écrasera le fichier de configuration existant.",
+                confirmTitle: "Confirmer l'Action",
+                btnCancel: "Annuler",
+                btnOk: "OK",
+                noFileUseTemplate: "Fichier introuvable sur le serveur. Utilisez le bouton 'Charger Modèle' pour charger un modèle."
+            },
+            es: {
+                toolbarTitle: "📁 Editor de Configuración ruTorrent",
+                btnLoadTemplate: "📄 Cargar Plantilla",
+                btnReload: "🔄 Recargar",
+                btnLoadFile: "📂 Cargar Archivo",
+                btnSave: "💾 Guardar",
+                btnDownload: "💾 Descargar",
+                btnValidate: "✓ Validar",
+                tooltipLoadTemplate: "Cargar una plantilla ruTorrent pre-configurada para empezar",
+                tooltipReload: "Recargar el archivo de configuración actual desde el servidor",
+                tooltipLoadFile: "Cargar un archivo de configuración desde su computadora local",
+                tooltipSave: "Guardar la configuración actual en el servidor",
+                tooltipDownload: "Descargar el archivo de configuración a su computadora",
+                tooltipValidate: "Verificar la configuración en busca de errores de sintaxis y advertencias",
+                tooltipLangSelector: "Cambiar el idioma de la interfaz",
+                statusReady: "Listo",
+                statusLoaded: "Plantilla cargada ✓",
+                statusFileLoaded: "Archivo cargado ✓",
+                statusDownloaded: "Archivo descargado ✓",
+                statusValidOk: "Validación OK ✓",
+                statusValidErr: "error(es) encontrado(s)",
+                lineCol: "Línea",
+                confirmLoadTemplate: "¿Reemplazar la configuración actual con la plantilla? Todos los cambios no guardados se perderán.",
+                confirmReload: "¿Recargar el archivo de configuración desde el servidor? Todos los cambios no guardados se perderán.",
+                confirmSave: "¿Guardar la configuración actual en el servidor? Esto sobrescribirá el archivo de configuración existente.",
+                confirmTitle: "Confirmar Acción",
+                btnCancel: "Cancelar",
+                btnOk: "OK",
+                noFileUseTemplate: "Archivo no encontrado en el servidor. Use el botón 'Cargar Plantilla' para cargar una plantilla."
+            }
+        };
+
+        let currentLang = 'en';
+        let currentFile = 'config';
+        let tooltipTimeout = null;
+        let confirmModalCallback = null;
+        let confirmModalEscHandler = null;
+
+        // ruTorrent-specific documentation
+        const ruTorrentDocs = {
+            // config.php variables
+            "$httpUserAgent": {
+                title: "$httpUserAgent",
+                description: "User agent string for HTTP requests made by ruTorrent (RSS, external trackers, etc.)",
+                syntax: "$httpUserAgent = 'Mozilla/5.0 ...';",
+                values: "Any valid user agent string"
+            },
+            "$httpTimeOut": {
+                title: "$httpTimeOut",
+                description: "Timeout for HTTP requests in seconds",
+                syntax: "$httpTimeOut = 30;",
+                values: "Integer, typically 10-60 seconds"
+            },
+            "$httpUseGzip": {
+                title: "$httpUseGzip",
+                description: "Enable gzip compression for HTTP requests",
+                syntax: "$httpUseGzip = true;",
+                values: "true|false"
+            },
+            "$httpIP": {
+                title: "$httpIP",
+                description: "IP address for external HTTP/HTTPS resources (RSS feeds). null for any",
+                syntax: "$httpIP = null;",
+                values: "IP string or null"
+            },
+            "$httpProxy": {
+                title: "$httpProxy",
+                description: "HTTP proxy configuration for external requests",
+                syntax: "$httpProxy = array('use' => false, 'proto' => 'http', 'host' => '...', 'port' => 3128);",
+                values: "Array with use, proto, host, port"
+            },
+            "$rpcTimeOut": {
+                title: "$rpcTimeOut",
+                description: "Timeout for XML-RPC requests to rTorrent in seconds",
+                syntax: "$rpcTimeOut = 5;",
+                values: "Integer, typically 5-30 seconds"
+            },
+            "$rpcLogCalls": {
+                title: "$rpcLogCalls",
+                description: "Log all RPC calls to rTorrent (debugging only)",
+                syntax: "$rpcLogCalls = false;",
+                values: "true|false - Enable for debugging only"
+            },
+            "$rpcLogFaults": {
+                title: "$rpcLogFaults",
+                description: "Log RPC errors and faults",
+                syntax: "$rpcLogFaults = true;",
+                values: "true|false - Recommended: true"
+            },
+            "$scgi_port": {
+                title: "$scgi_port",
+                description: "TCP port for SCGI connection to rTorrent. Set to 0 for UNIX socket",
+                syntax: "$scgi_port = 5000;",
+                values: "Integer 1-65535, or 0 for UNIX socket"
+            },
+            "$scgi_host": {
+                title: "$scgi_host",
+                description: "Host/IP for SCGI connection. Use 'unix://path' for UNIX socket",
+                syntax: "$scgi_host = '127.0.0.1'; or $scgi_host = 'unix:///tmp/rpc.socket';",
+                values: "IP address or 'unix://path/to/socket'"
+            },
+            "$topDirectory": {
+                title: "$topDirectory",
+                description: "Upper limit for browsable directories. Must be absolute path with trailing slash",
+                syntax: "$topDirectory = '/';",
+                values: "Absolute path, e.g. '/home/user/downloads/'"
+            },
+            "$saveUploadedTorrents": {
+                title: "$saveUploadedTorrents",
+                description: "Save uploaded .torrent files to profile/torrents directory",
+                syntax: "$saveUploadedTorrents = true;",
+                values: "true|false"
+            },
+            "$overwriteUploadedTorrents": {
+                title: "$overwriteUploadedTorrents",
+                description: "Overwrite existing .torrent files or create unique names",
+                syntax: "$overwriteUploadedTorrents = false;",
+                values: "true|false"
+            },
+            "$log_file": {
+                title: "$log_file",
+                description: "Path to ruTorrent error log file. Empty string to disable",
+                syntax: "$log_file = '/tmp/errors.log';",
+                values: "Absolute path or empty string to disable"
+            },
+            "$phpUseGzip": {
+                title: "$phpUseGzip",
+                description: "Enable external gzip binary for PHP output compression (pages > 2KB)",
+                syntax: "$phpUseGzip = false;",
+                values: "true|false"
+            },
+            "$phpGzipLevel": {
+                title: "$phpGzipLevel",
+                description: "Gzip compression level (1-9)",
+                syntax: "$phpGzipLevel = 2;",
+                values: "Integer 1-9, higher = more compression"
+            },
+            "$do_diagnostic": {
+                title: "$do_diagnostic",
+                description: "Enable ruTorrent diagnostics and permission checking. Recommended",
+                syntax: "$do_diagnostic = true;",
+                values: "true|false"
+            },
+            "$al_diagnostic": {
+                title: "$al_diagnostic",
+                description: "Enable auto-loader diagnostics. Set false for composer plugins",
+                syntax: "$al_diagnostic = true;",
+                values: "true|false"
+            },
+            "$schedule_rand": {
+                title: "$schedule_rand",
+                description: "Random delay for scheduler start in seconds (0 to X)",
+                syntax: "$schedule_rand = 10;",
+                values: "Integer in seconds"
+            },
+            "$forbidUserSettings": {
+                title: "$forbidUserSettings",
+                description: "Prevent users from changing their settings",
+                syntax: "$forbidUserSettings = false;",
+                values: "true|false"
+            },
+            "$enableCSRFCheck": {
+                title: "$enableCSRFCheck",
+                description: "Enable CSRF (Cross-Site Request Forgery) protection via Origin/Referer check",
+                syntax: "$enableCSRFCheck = false;",
+                values: "true|false - Enable for public installations"
+            },
+            "$enabledOrigins": {
+                title: "$enabledOrigins",
+                description: "List of allowed domains for CSRF check (hostnames only, no protocols)",
+                syntax: "$enabledOrigins = array('example.com', 'sub.example.com');",
+                values: "Array of hostnames"
+            },
+            "$profilePath": {
+                title: "$profilePath",
+                description: "Path to user profiles directory",
+                syntax: "$profilePath = '../../share';",
+                values: "Relative or absolute path"
+            },
+            "$profileMask": {
+                title: "$profileMask",
+                description: "Unix permissions mask for profile files/directories (octal)",
+                syntax: "$profileMask = 0777;",
+                values: "Octal, e.g. 0777, 0770, 0755"
+            },
+            "$tempDirectory": {
+                title: "$tempDirectory",
+                description: "Temporary directory. Absolute path or null for auto-detect",
+                syntax: "$tempDirectory = null;",
+                values: "Absolute path or null"
+            },
+            "$canUseXSendFile": {
+                title: "$canUseXSendFile",
+                description: "Enable X-Sendfile feature if available (Apache/nginx)",
+                syntax: "$canUseXSendFile = false;",
+                values: "true|false"
+            },
+            "$locale": {
+                title: "$locale",
+                description: "Character encoding for the interface",
+                syntax: "$locale = 'UTF8';",
+                values: "UTF8, ISO-8859-1, etc."
+            },
+            "$localHostedMode": {
+                title: "$localHostedMode",
+                description: "True if rTorrent is on the same machine as ruTorrent",
+                syntax: "$localHostedMode = false;",
+                values: "true|false"
+            },
+            "$cachedPluginLoading": {
+                title: "$cachedPluginLoading",
+                description: "Enable cached plugin loading for faster startup. Clear browser cache when upgrading",
+                syntax: "$cachedPluginLoading = false;",
+                values: "true|false"
+            },
+            "$pluginMinification": {
+                title: "$pluginMinification",
+                description: "Minify JavaScript to reduce loading times",
+                syntax: "$pluginMinification = true;",
+                values: "true|false - Disable for debugging"
+            },
+            // access.ini options
+            "showDownloadsPage": {
+                title: "showDownloadsPage",
+                description: "Allow user to access Download settings page in preferences",
+                syntax: "showDownloadsPage = yes",
+                values: "yes|no"
+            },
+            "showConnectionPage": {
+                title: "showConnectionPage",
+                description: "Allow user to access Connection settings page in preferences",
+                syntax: "showConnectionPage = yes",
+                values: "yes|no"
+            },
+            "showBittorentPage": {
+                title: "showBittorentPage",
+                description: "Allow user to access BitTorrent settings page in preferences",
+                syntax: "showBittorentPage = yes",
+                values: "yes|no"
+            },
+            "showAdvancedPage": {
+                title: "showAdvancedPage",
+                description: "Allow user to access Advanced settings page in preferences",
+                syntax: "showAdvancedPage = yes",
+                values: "yes|no"
+            },
+            "showPluginsTab": {
+                title: "showPluginsTab",
+                description: "Show Plugins tab in ruTorrent interface",
+                syntax: "showPluginsTab = yes",
+                values: "yes|no"
+            },
+            "canChangeULRate": {
+                title: "canChangeULRate",
+                description: "Allow user to change global upload rate limit from status bar",
+                syntax: "canChangeULRate = yes",
+                values: "yes|no"
+            },
+            "canChangeDLRate": {
+                title: "canChangeDLRate",
+                description: "Allow user to change global download rate limit from status bar",
+                syntax: "canChangeDLRate = yes",
+                values: "yes|no"
+            },
+            "canChangeTorrentProperties": {
+                title: "canChangeTorrentProperties",
+                description: "Allow user to edit torrent properties (trackers, peers, files, etc.)",
+                syntax: "canChangeTorrentProperties = yes",
+                values: "yes|no"
+            },
+            "canAddTorrentsWithoutPath": {
+                title: "canAddTorrentsWithoutPath",
+                description: "Allow adding torrents without specifying download directory",
+                syntax: "canAddTorrentsWithoutPath = yes",
+                values: "yes|no"
+            },
+            "canAddTorrentsWithoutStarting": {
+                title: "canAddTorrentsWithoutStarting",
+                description: "Allow adding torrents in stopped state",
+                syntax: "canAddTorrentsWithoutStarting = yes",
+                values: "yes|no"
+            },
+            "canAddTorrentsWithResume": {
+                title: "canAddTorrentsWithResume",
+                description: "Allow adding torrents with fast resume data",
+                syntax: "canAddTorrentsWithResume = yes",
+                values: "yes|no"
+            },
+            "canAddTorrentsWithRandomizeHash": {
+                title: "canAddTorrentsWithRandomizeHash",
+                description: "Allow randomizing torrent info hash when adding (for testing/debugging)",
+                syntax: "canAddTorrentsWithRandomizeHash = yes",
+                values: "yes|no"
+            },
+            // plugins.ini options
+            "enabled": {
+                title: "enabled",
+                description: "Enable or disable the plugin",
+                syntax: "enabled = yes",
+                values: "yes|no|user-defined (user can control from UI)"
+            },
+            "canChangeToolbar": {
+                title: "canChangeToolbar",
+                description: "Allow plugin to modify the toolbar",
+                syntax: "canChangeToolbar = yes",
+                values: "yes|no"
+            },
+            "canChangeMenu": {
+                title: "canChangeMenu",
+                description: "Allow plugin to modify context menus",
+                syntax: "canChangeMenu = yes",
+                values: "yes|no"
+            },
+            "canChangeOptions": {
+                title: "canChangeOptions",
+                description: "Allow users to modify plugin options",
+                syntax: "canChangeOptions = yes",
+                values: "yes|no"
+            },
+            "canChangeTabs": {
+                title: "canChangeTabs",
+                description: "Allow plugin to add/modify tabs",
+                syntax: "canChangeTabs = yes",
+                values: "yes|no"
+            },
+            "canChangeColumns": {
+                title: "canChangeColumns",
+                description: "Allow plugin to add columns to torrent list",
+                syntax: "canChangeColumns = yes",
+                values: "yes|no"
+            },
+            "canChangeStatusBar": {
+                title: "canChangeStatusBar",
+                description: "Allow plugin to modify status bar",
+                syntax: "canChangeStatusBar = yes",
+                values: "yes|no"
+            },
+            "canChangeCategory": {
+                title: "canChangeCategory",
+                description: "Allow plugin to add/modify categories",
+                syntax: "canChangeCategory = yes",
+                values: "yes|no"
+            },
+            "canBeShutdowned": {
+                title: "canBeShutdowned",
+                description: "Allow plugin to be disabled at runtime",
+                syntax: "canBeShutdowned = yes",
+                values: "yes|no"
+            }
+        };
+
+        // ruTorrent-specific autocomplete
+        const ruTorrentCompleter = {
+            getCompletions: function(editor, session, pos, prefix, callback) {
+                const mode = session.getMode().$id;
+                let completions = [];
+                
+                if (mode.includes('php')) {
+                    completions = [
+                        {caption: "$httpUserAgent", value: "$httpUserAgent = 'Mozilla/5.0';", meta: "HTTP user agent", score: 1000},
+                        {caption: "$httpTimeOut", value: "$httpTimeOut = 30;", meta: "HTTP timeout (seconds)", score: 1000},
+                        {caption: "$httpUseGzip", value: "$httpUseGzip = true;", meta: "Enable gzip for HTTP", score: 900},
+                        {caption: "$httpIP", value: "$httpIP = null;", meta: "IP for external resources", score: 800},
+                        {caption: "$httpProxy", value: "$httpProxy = array('use' => false, 'proto' => 'http', 'host' => '', 'port' => 3128);", meta: "HTTP proxy config", score: 800},
+                        {caption: "$rpcTimeOut", value: "$rpcTimeOut = 5;", meta: "RPC timeout (seconds)", score: 1000},
+                        {caption: "$rpcLogCalls", value: "$rpcLogCalls = false;", meta: "Log RPC calls", score: 800},
+                        {caption: "$rpcLogFaults", value: "$rpcLogFaults = true;", meta: "Log RPC errors", score: 900},
+                        {caption: "$scgi_port", value: "$scgi_port = 5000;", meta: "SCGI port (0 for socket)", score: 1000},
+                        {caption: "$scgi_host", value: "$scgi_host = '127.0.0.1';", meta: "SCGI host or unix://path", score: 1000},
+                        {caption: "$topDirectory", value: "$topDirectory = '/';", meta: "Upper directory limit", score: 900},
+                        {caption: "$saveUploadedTorrents", value: "$saveUploadedTorrents = true;", meta: "Save .torrent files", score: 900},
+                        {caption: "$overwriteUploadedTorrents", value: "$overwriteUploadedTorrents = false;", meta: "Overwrite existing torrents", score: 800},
+                        {caption: "$log_file", value: "$log_file = '/tmp/errors.log';", meta: "Error log path", score: 900},
+                        {caption: "$phpUseGzip", value: "$phpUseGzip = false;", meta: "Enable gzip for PHP", score: 800},
+                        {caption: "$phpGzipLevel", value: "$phpGzipLevel = 2;", meta: "Gzip compression level", score: 700},
+                        {caption: "$do_diagnostic", value: "$do_diagnostic = true;", meta: "Enable diagnostics", score: 900},
+                        {caption: "$al_diagnostic", value: "$al_diagnostic = true;", meta: "Auto-loader diagnostic", score: 800},
+                        {caption: "$schedule_rand", value: "$schedule_rand = 10;", meta: "Scheduler random delay", score: 700},
+                        {caption: "$enableCSRFCheck", value: "$enableCSRFCheck = false;", meta: "Enable CSRF protection", score: 900},
+                        {caption: "$profilePath", value: "$profilePath = '../../share';", meta: "User profiles path", score: 800},
+                        {caption: "$profileMask", value: "$profileMask = 0777;", meta: "Profile permissions mask", score: 800},
+                        {caption: "$tempDirectory", value: "$tempDirectory = null;", meta: "Temp directory", score: 800},
+                        {caption: "$localHostedMode", value: "$localHostedMode = false;", meta: "rTorrent on same machine", score: 800},
+                        {caption: "$cachedPluginLoading", value: "$cachedPluginLoading = false;", meta: "Cache plugin loading", score: 700},
+                        {caption: "$pluginMinification", value: "$pluginMinification = true;", meta: "Minify JavaScript", score: 700}
+                    ];
+                } else {
+                    // INI file completions
+                    completions = [
+                        {caption: "showDownloadsPage", value: "showDownloadsPage = yes", meta: "Access Download settings", score: 900},
+                        {caption: "showConnectionPage", value: "showConnectionPage = yes", meta: "Access Connection settings", score: 900},
+                        {caption: "showBittorentPage", value: "showBittorentPage = yes", meta: "Access BitTorrent settings", score: 900},
+                        {caption: "showAdvancedPage", value: "showAdvancedPage = yes", meta: "Access Advanced settings", score: 900},
+                        {caption: "showPluginsTab", value: "showPluginsTab = yes", meta: "Show Plugins tab", score: 900},
+                        {caption: "canChangeULRate", value: "canChangeULRate = yes", meta: "Change upload rate", score: 900},
+                        {caption: "canChangeDLRate", value: "canChangeDLRate = yes", meta: "Change download rate", score: 900},
+                        {caption: "canChangeTorrentProperties", value: "canChangeTorrentProperties = yes", meta: "Edit torrent properties", score: 900},
+                        {caption: "canAddTorrentsWithoutPath", value: "canAddTorrentsWithoutPath = yes", meta: "Add without path", score: 900},
+                        {caption: "canAddTorrentsWithoutStarting", value: "canAddTorrentsWithoutStarting = yes", meta: "Add without starting", score: 900},
+                        {caption: "canAddTorrentsWithResume", value: "canAddTorrentsWithResume = yes", meta: "Add with resume", score: 900},
+                        {caption: "canAddTorrentsWithRandomizeHash", value: "canAddTorrentsWithRandomizeHash = yes", meta: "Randomize hash", score: 800},
+                        {caption: "enabled", value: "enabled = yes", meta: "Plugin enabled", score: 900},
+                        {caption: "canChangeToolbar", value: "canChangeToolbar = yes", meta: "Modify toolbar", score: 800},
+                        {caption: "canChangeMenu", value: "canChangeMenu = yes", meta: "Modify menus", score: 800},
+                        {caption: "canChangeOptions", value: "canChangeOptions = yes", meta: "Modify options", score: 800},
+                        {caption: "canChangeTabs", value: "canChangeTabs = yes", meta: "Add/modify tabs", score: 800},
+                        {caption: "canChangeColumns", value: "canChangeColumns = yes", meta: "Add columns", score: 800},
+                        {caption: "canChangeStatusBar", value: "canChangeStatusBar = yes", meta: "Modify status bar", score: 800},
+                        {caption: "canChangeCategory", value: "canChangeCategory = yes", meta: "Modify categories", score: 800},
+                        {caption: "canBeShutdowned", value: "canBeShutdowned = yes", meta: "Can be disabled", score: 800}
+                    ];
+                }
+                
+                callback(null, completions);
+            }
+        };
+
+        // Initialize Ace Editor
+        const editor = ace.edit("editor");
+        editor.setTheme("ace/theme/monokai");
+        editor.session.setMode("ace/mode/php");
+        editor.setOptions({
+            enableBasicAutocompletion: true,
+            enableLiveAutocompletion: true,
+            enableSnippets: true,
+            fontSize: "13px",
+            showPrintMargin: false,
+            highlightActiveLine: true
+        });
+        
+        editor.completers = [ruTorrentCompleter];
+        
+        editor.session.on('change', function() {
+            updateLineInfo();
+        });
+        
+        editor.selection.on('changeCursor', function() {
+            updateLineInfo();
+        });
+        
+        // Show tooltips on hover
+        let tooltipTimer;
+        editor.on("mousemove", function(e) {
+            clearTimeout(tooltipTimer);
+            const position = e.getDocumentPosition();
+            const token = editor.session.getTokenAt(position.row, position.column);
+            
+            if (token && token.value) {
+                const tokenValue = token.value.trim();
+                const doc = ruTorrentDocs[tokenValue];
+                
+                if (doc) {
+                    tooltipTimer = setTimeout(() => {
+                        showTooltip(doc, e.domEvent.clientX, e.domEvent.clientY);
+                    }, 500);
+                } else {
+                    hideTooltip();
+                }
+            } else {
+                hideTooltip();
+            }
+        });
+        
+        function showTooltip(doc, x, y) {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.innerHTML = `
+                <div class="tooltip-title">${doc.title}</div>
+                <div class="tooltip-description">${doc.description}</div>
+                <div class="tooltip-syntax">${doc.syntax}</div>
+                <div class="tooltip-values">Values: ${doc.values}</div>
+            `;
+            tooltip.style.left = (x + 10) + 'px';
+            tooltip.style.top = (y + 10) + 'px';
+            tooltip.style.display = 'block';
+        }
+        
+        function hideTooltip() {
+            document.getElementById('tooltip').style.display = 'none';
+        }
+        
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast ' + type;
+            toast.style.display = 'block';
+            
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 8000);
+        }
+        
+        function detectLanguage() {
+            const browserLang = navigator.language || navigator.userLanguage;
+            const langCode = browserLang.split('-')[0];
+            return ['en', 'it', 'de', 'fr', 'es'].includes(langCode) ? langCode : 'en';
+        }
+        
+        function changeLanguage(lang) {
+            currentLang = (lang === 'auto') ? detectLanguage() : lang;
+            updateUI();
+        }
+        
+        function updateUI() {
+            const t = translations[currentLang];
+            
+            const titleEl = document.getElementById('toolbarTitle');
+            const btnLoadTemplateEl = document.getElementById('btnLoadTemplate');
+            const btnReloadEl = document.getElementById('btnReload');
+            const btnLoadFileEl = document.getElementById('btnLoadFile');
+            const btnSaveEl = document.getElementById('btnSave');
+            const btnDownloadEl = document.getElementById('btnDownload');
+            const btnValidateEl = document.getElementById('btnValidate');
+            const langSelectorEl = document.getElementById('langSelector');
+            const statusEl = document.getElementById('status');
+            const btnConfirmOkEl = document.getElementById('btnConfirmOk');
+            const btnConfirmCancelEl = document.getElementById('btnConfirmCancel');
+            
+            if (titleEl && t.toolbarTitle) titleEl.textContent = t.toolbarTitle;
+            if (btnLoadTemplateEl && t.btnLoadTemplate) {
+                btnLoadTemplateEl.textContent = t.btnLoadTemplate;
+                if (t.tooltipLoadTemplate) btnLoadTemplateEl.title = t.tooltipLoadTemplate;
+            }
+            if (btnReloadEl && t.btnReload) {
+                btnReloadEl.textContent = t.btnReload;
+                if (t.tooltipReload) btnReloadEl.title = t.tooltipReload;
+            }
+            if (btnLoadFileEl && t.btnLoadFile) {
+                btnLoadFileEl.textContent = t.btnLoadFile;
+                if (t.tooltipLoadFile) btnLoadFileEl.title = t.tooltipLoadFile;
+            }
+            if (btnSaveEl && t.btnSave) {
+                btnSaveEl.textContent = t.btnSave;
+                if (t.tooltipSave) btnSaveEl.title = t.tooltipSave;
+            }
+            if (btnDownloadEl && t.btnDownload) {
+                btnDownloadEl.textContent = t.btnDownload;
+                if (t.tooltipDownload) btnDownloadEl.title = t.tooltipDownload;
+            }
+            if (btnValidateEl && t.btnValidate) {
+                btnValidateEl.textContent = t.btnValidate;
+                if (t.tooltipValidate) btnValidateEl.title = t.tooltipValidate;
+            }
+            if (langSelectorEl && t.tooltipLangSelector) {
+                langSelectorEl.title = t.tooltipLangSelector;
+            }
+            if (statusEl && t.statusReady) statusEl.textContent = t.statusReady;
+            if (btnConfirmOkEl && t.btnOk) btnConfirmOkEl.textContent = t.btnOk;
+            if (btnConfirmCancelEl && t.btnCancel) btnConfirmCancelEl.textContent = t.btnCancel;
+        }
+        
+        function updateLineInfo() {
+            const pos = editor.getCursorPosition();
+            const t = translations[currentLang];
+            document.getElementById('line-info').textContent = `${t.lineCol} ${pos.row + 1}, Col ${pos.column + 1}`;
+        }
+        
+        // Get base path from URL parameter or detect it
+        function getRutorrentBasePath() {
+            const params = new URLSearchParams(window.location.search);
+            const pathParam = params.get('path');
+            
+            // If path parameter provided, use it
+            if (pathParam) {
+                return pathParam.replace(/\/$/, ''); // Remove trailing slash
+            }
+            
+            // Auto-detect: check for externalized installation first
+            // This will be determined when loading files
+            return null;
+        }
+        
+        // Detect if rutorrent is externalized
+        async function detectRutorrentPath() {
+            // Try externalized path first using CONFIG
+            try {
+                const extPath = `${CONFIG.paths.externalBase}/${CONFIG.paths.files.config}`;
+                const data = await readFileFromServer(extPath);
+                
+                if (data.success || (data.error && !data.error.includes('Access denied'))) {
+                    return CONFIG.paths.externalBase;
+                }
+            } catch (e) {
+                // Externalized not accessible, try standard
+            }
+            
+            // Fall back to standard path from CONFIG
+            return CONFIG.paths.standardBase;
+        }
+        
+        // Get file path from URL or current file type
+        async function getCurrentFilePath() {
+            const params = new URLSearchParams(window.location.search);
+            const urlFile = params.get('file');
+            
+            // Get base path (from URL or auto-detect)
+            let basePath = getRutorrentBasePath();
+            if (!basePath) {
+                basePath = await detectRutorrentPath();
+            }
+            
+            // If file parameter exists, check if it's basename or full path
+            if (urlFile) {
+                // If contains '/', it's a full path
+                if (urlFile.includes('/')) {
+                    return urlFile;
+                }
+                // Otherwise it's a basename, construct full path
+                return `${basePath}/${urlFile}`;
+            }
+            
+            // Default paths based on current file type
+            const paths = {
+                'config': `${basePath}/config.php`,
+                'freetz_config': `${basePath}/freetz_config.php`,
+                'access': `${basePath}/access.ini`,
+                'plugins': `${basePath}/plugins.ini`
+            };
+            return paths[currentFile] || paths['config'];
+        }
+        
+        // Confirm modal functions
+        function showConfirmModal(message) {
+            return new Promise((resolve) => {
+                const t = translations[currentLang];
+                const modal = document.getElementById('confirmModal');
+                const title = document.getElementById('confirmModalTitle');
+                const body = document.getElementById('confirmModalBody');
+                const btnOk = document.getElementById('btnConfirmOk');
+                const btnCancel = document.getElementById('btnConfirmCancel');
+                
+                title.textContent = t.confirmTitle || 'Confirm Action';
+                body.textContent = message;
+                btnOk.textContent = t.btnOk || 'OK';
+                btnCancel.textContent = t.btnCancel || 'Cancel';
+                
+                confirmModalCallback = resolve;
+                
+                // Add ESC/Enter key handler
+                if (confirmModalEscHandler) {
+                    document.removeEventListener('keydown', confirmModalEscHandler);
+                }
+                confirmModalEscHandler = function(e) {
+                    if (e.key === 'Escape') {
+                        closeConfirmModal(false);
+                    } else if (e.key === 'Enter') {
+                        closeConfirmModal(true);
+                    }
+                };
+                modal.style.display = 'flex';
+                
+                // Set focus on OK button so Enter key works immediately
+                setTimeout(() => btnOk.focus(), 50);
+            });
+        }
+        
+        function closeConfirmModal(result) {
+            document.getElementById('confirmModal').style.display = 'none';
+            
+            // Remove ESC handler
+            if (confirmModalEscHandler) {
+                document.removeEventListener('keydown', confirmModalEscHandler);
+                confirmModalEscHandler = null;
+            }
+            
+            if (confirmModalCallback) {
+                confirmModalCallback(result);
+                confirmModalCallback = null;
+            }
+        }
+        
+        // Load file from FritzBox filesystem via CGI
+        async function loadFileFromServer(filePath) {
+            const t = translations[currentLang];
+            
+            // Show confirmation only if editor has content (not on first load)
+            if (editor.getValue().trim().length > 0) {
+                const confirmed = await showConfirmModal(t.confirmReload);
+                if (!confirmed) return null; // User cancelled
+            }
+            
+            if (!filePath) filePath = await getCurrentFilePath();
+            
+            try {
+                document.getElementById('status').textContent = 'Loading file...';
+                
+                // Use utility function from CONFIG
+                const data = await readFileFromServer(filePath);
+                
+                if (data.success && data.content !== undefined) {
+                    editor.setValue(data.content, -1);
+                    document.getElementById('status').textContent = `${data.file} loaded ✓`;
+                    document.getElementById('status').style.background = '#198754';
+                    setTimeout(() => {
+                        document.getElementById('status').textContent = t.statusReady;
+                        document.getElementById('status').style.background = '#007acc';
+                    }, 2000);
+                    return true;
+                } else if (data.error) {
+                    // File doesn't exist or error occurred
+                    console.error('Error from server:', data.error);
+                    document.getElementById('status').textContent = `Error: ${data.error}`;
+                    document.getElementById('status').style.background = '#c72e0f';
+                    setTimeout(() => {
+                        document.getElementById('status').textContent = t.statusReady;
+                        document.getElementById('status').style.background = '#007acc';
+                    }, 3000);
+                    return false;
+                }
+            } catch (error) {
+                console.error('Error loading file:', error);
+                document.getElementById('status').textContent = 'Error: ' + error.message;
+                document.getElementById('status').style.background = '#c72e0f';
+                setTimeout(() => {
+                    document.getElementById('status').textContent = t.statusReady;
+                    document.getElementById('status').style.background = '#007acc';
+                }, 3000);
+                return false;
+            }
+        }
+        
+        // Save file to FritzBox filesystem via CGI
+        async function saveFileToServer() {
+            const t = translations[currentLang];
+            
+            // Show confirmation before saving
+            const confirmed = await showConfirmModal(t.confirmSave);
+            if (!confirmed) return;
+            
+            const filePath = await getCurrentFilePath();
+            const content = editor.getValue();
+            
+            try {
+                document.getElementById('status').textContent = 'Saving file...';
+                
+                // Use utility function with CONFIG
+                const data = await writeFileToServer(filePath, content);
+                
+                if (data.success) {
+                    document.getElementById('status').textContent = `${data.file} saved ✓`;
+                    document.getElementById('status').style.background = '#198754';
+                    setTimeout(() => {
+                        document.getElementById('status').textContent = t.statusReady;
+                        document.getElementById('status').style.background = '#007acc';
+                    }, 2000);
+                } else {
+                    throw new Error(data.error || 'Failed to save file');
+                }
+            } catch (error) {
+                console.error('Error saving file:', error);
+                document.getElementById('status').textContent = 'Error: ' + error.message;
+                document.getElementById('status').style.background = '#c72e0f';
+                setTimeout(() => {
+                    document.getElementById('status').textContent = t.statusReady;
+                    document.getElementById('status').style.background = '#007acc';
+                }, 3000);
+            }
+        }
+
+        async function switchFile(fileType) {
+            const previousFile = currentFile;
+            currentFile = fileType;
+            
+            // Always try to load from server (works in demo mode too via mock backend)
+            const filePath = await getCurrentFilePath();
+            const loaded = await loadFileFromServer(filePath);
+            
+            // If user cancelled, restore previous file selection
+            if (loaded === null) {
+                currentFile = previousFile;
+                document.getElementById('fileType').value = previousFile;
+                return;
+            }
+            
+            // If file loaded successfully, just update mode and return
+            if (loaded === true) {
+                if (fileType === 'config' || fileType === 'freetz_config') {
+                    editor.session.setMode('ace/mode/php');
+                } else {
+                    editor.session.setMode('ace/mode/ini');
+                }
+                return;
+            }
+            
+            // File doesn't exist - set appropriate editor mode and show message
+            if (fileType === 'config' || fileType === 'freetz_config') {
+                editor.session.setMode('ace/mode/php');
+            } else {
+                editor.session.setMode('ace/mode/ini');
+            }
+            
+            // Show empty editor with message to use "Load Template" button
+            const t = translations[currentLang];
+            const message = t.noFileUseTemplate || 'File not found on server. Use "Load Template" button to load a template.';
+            editor.setValue(`# ${message}\n`);
+            editor.clearSelection();
+            editor.gotoLine(1);
+            
+            document.getElementById('status').textContent = message;
+            document.getElementById('status').style.background = '#856404';
+        }
+        
+        async function loadTemplate() {
+            const t = translations[currentLang];
+            const confirmed = await showConfirmModal(t.confirmLoadTemplate);
+            if (!confirmed) return;
+            
+            // Try to load template from server
+            const basePath = await (async () => {
+                let path = getRutorrentBasePath();
+                if (!path) {
+                    path = await detectRutorrentPath();
+                }
+                return path;
+            })();
+            
+            // Template file paths based on currentFile type
+            const fileInfo = CONFIG.fileTypes[currentFile];
+            const fileName = CONFIG.paths.files[currentFile === 'freetz_config' ? 'freetzConfig' : currentFile];
+            const templatePath = `${basePath}/${fileName}${CONFIG.paths.templateSuffix}`;
+            
+            try {
+                document.getElementById('status').textContent = 'Loading template...';
+                
+                // Use utility function with CONFIG
+                const data = await readFileFromServer(templatePath);
+                
+                if (data.success && data.content !== undefined) {
+                    editor.setValue(data.content, -1);
+                    editor.clearSelection();
+                    editor.gotoLine(1);
+                    document.getElementById('status').textContent = t.statusLoaded;
+                    setTimeout(() => {
+                        document.getElementById('status').textContent = t.statusReady;
+                    }, 2000);
+                } else {
+                    throw new Error(data.error || 'Template not found');
+                }
+            } catch (error) {
+                console.error('Error loading template:', error);
+                document.getElementById('status').textContent = `Error: Template not found on server`;
+                document.getElementById('status').style.background = '#c72e0f';
+                setTimeout(() => {
+                    document.getElementById('status').textContent = t.statusReady;
+                    document.getElementById('status').style.background = '#007acc';
+                }, 3000);
+            }
+        }
+        
+        function loadFromFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                editor.setValue(e.target.result);
+                editor.clearSelection();
+                editor.gotoLine(1);
+                
+                // Auto-detect file type
+                if (file.name.endsWith('.php')) {
+                    currentFile = 'config';
+                    document.getElementById('fileType').value = 'config';
+                    editor.session.setMode('ace/mode/php');
+                } else if (file.name.includes('access')) {
+                    currentFile = 'access';
+                    document.getElementById('fileType').value = 'access';
+                    editor.session.setMode('ace/mode/ini');
+                } else if (file.name.includes('plugins')) {
+                    currentFile = 'plugins';
+                    document.getElementById('fileType').value = 'plugins';
+                    editor.session.setMode('ace/mode/ini');
+                }
+                
+                const t = translations[currentLang];
+                document.getElementById('status').textContent = t.statusFileLoaded;
+                setTimeout(() => {
+                    document.getElementById('status').textContent = t.statusReady;
+                }, 2000);
+            };
+            reader.readAsText(file);
+        }
+        
+        function downloadConfig() {
+            // Check if we're on FritzBox (running from /usr/mww/)
+            if (window.location.pathname.includes('/usr/mww/')) {
+                // Save to server
+                saveFileToServer();
+            } else {
+                // Download to local browser
+                const content = editor.getValue();
+                let filename;
+                
+                if (currentFile === 'config') {
+                    filename = 'config.php';
+                } else if (currentFile === 'freetz_config') {
+                    filename = 'freetz_config.php';
+                } else if (currentFile === 'access') {
+                    filename = 'access.ini';
+                } else {
+                    filename = 'plugins.ini';
+                }
+                
+                const blob = new Blob([content], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                const t = translations[currentLang];
+                document.getElementById('status').textContent = t.statusDownloaded;
+                setTimeout(() => {
+                    document.getElementById('status').textContent = t.statusReady;
+                }, 2000);
+            }
+        }
+        
+        function validateConfig() {
+            const content = editor.getValue().trim();
+            const mode = editor.session.getMode().$id;
+            const t = translations[currentLang];
+            let errors = [];
+            let warnings = [];
+            
+            // Check if content is empty
+            if (!content || content.trim().length === 0) {
+                errors.push('Empty file');
+                document.getElementById('status').textContent = '1 ' + t.statusValidErr;
+                document.getElementById('status').style.background = '#c72e0f';
+                showToast('Empty file', 'error');
+                setTimeout(() => {
+                    document.getElementById('status').textContent = t.statusReady;
+                    document.getElementById('status').style.background = '#007acc';
+                }, 3000);
+                return;
+            }
+            
+            // Get syntax errors from Ace Editor
+            const annotations = editor.session.getAnnotations() || [];
+            annotations.forEach(ann => {
+                const msg = `${t.lineCol} ${ann.row + 1}: ${ann.text}`;
+                if (ann.type === 'error') {
+                    errors.push(msg);
+                } else if (ann.type === 'warning') {
+                    warnings.push(msg);
+                }
+            });
+            
+            // Add semantic validation specific to ruTorrent
+            if (mode.includes('php')) {
+                validatePHPSemantics(content, errors, warnings);
+            } else {
+                validateINISemantics(content, errors, warnings);
+            }
+            
+            const totalIssues = errors.length + warnings.length;
+            
+            if (totalIssues === 0) {
+                document.getElementById('status').textContent = t.statusValidOk;
+                document.getElementById('status').style.background = '#16825d';
+                showToast('✓ Validation successful!', 'success');
+            } else {
+                const allIssues = [...errors, ...warnings];
+                document.getElementById('status').textContent = `${totalIssues} ${t.statusValidErr}`;
+                document.getElementById('status').style.background = errors.length > 0 ? '#c72e0f' : '#e5a50a';
+                showToast(allIssues.join('\n'), errors.length > 0 ? 'error' : 'warning');
+            }
+            
+            setTimeout(() => {
+                document.getElementById('status').textContent = t.statusReady;
+                document.getElementById('status').style.background = '#007acc';
+            }, 3000);
+        }
+        
+        function validatePHPSemantics(content, errors, warnings) {
+            const t = translations[currentLang];
+            
+            // Valid ruTorrent configuration variables
+            const validPhpVars = [
+                '$httpUserAgent', '$httpTimeOut', '$httpUseGzip', '$httpIP', '$httpProxy',
+                '$rpcTimeOut', '$rpcLogCalls', '$rpcLogFaults',
+                '$scgi_port', '$scgi_host', '$XMLRPCMountPoint',
+                '$phpUseGzip', '$phpGzipLevel', '$schedule_rand',
+                '$do_diagnostic', '$al_diagnostic', '$log_file',
+                '$saveUploadedTorrents', '$overwriteUploadedTorrents',
+                '$topDirectory', '$profilePath', '$profileMask', '$tempDirectory',
+                '$forbidUserSettings', '$enableCSRFCheck', '$enabledOrigins',
+                '$localHostedMode', '$cachedPluginLoading', '$pluginMinification',
+                '$canUseXSendFile', '$locale', '$pathToExternals',
+                '$localhosts', '$throttleMaxSpeed'
+            ];
+            
+            const lines = content.split('\n');
+            
+            for (let i = 0; i < lines.length; i++) {
+                const lineNum = i + 1;
+                const line = lines[i].trim();
+                
+                // Skip empty lines, comments, and PHP tags
+                if (!line || line.startsWith('//') || line.startsWith('#') || 
+                    line.startsWith('/*') || line.startsWith('*') ||
+                    line.includes('<?') || line.includes('?>')) {
+                    continue;
+                }
+                
+                // Check for variable assignments (semantic check)
+                const varMatch = line.match(/\$(\w+)\s*=/);
+                if (varMatch) {
+                    const varName = '$' + varMatch[1];
+                    if (!validPhpVars.includes(varName)) {
+                        warnings.push(`${t.lineCol} ${lineNum}: Variable "${varName}" is not a standard ruTorrent configuration variable`);
+                    }
+                }
+            }
+            
+            // Check for required PHP opening tag
+            if (!content.includes('<?php') && !content.includes('<?')) {
+                warnings.push('Missing PHP opening tag (<?php) - recommended for config files');
+            }
+        }
+        
+        function validateINISemantics(content, errors, warnings) {
+            const t = translations[currentLang];
+            
+            const lines = content.split('\n');
+            let currentSection = null;
+            
+            // Valid sections and keys for ruTorrent
+            const validSections = {
+                'access': ['settings', 'tabs', 'statusbar', 'dialogs'],
+                'plugins': ['default'] // plugins can have custom sections for each plugin
+            };
+            
+            const validKeys = {
+                'access': [
+                    'showDownloadsPage', 'showConnectionPage', 'showBittorentPage', 'showAdvancedPage',
+                    'showPluginsTab',
+                    'canChangeULRate', 'canChangeDLRate',
+                    'canChangeTorrentProperties', 'canAddTorrentsWithoutPath',
+                    'canAddTorrentsWithoutStarting', 'canAddTorrentsWithResume',
+                    'canAddTorrentsWithRandomizeHash'
+                ],
+                'plugins': [
+                    'enabled', 'canChangeToolbar', 'canChangeMenu', 'canChangeOptions',
+                    'canChangeTabs', 'canChangeColumns', 'canChangeStatusBar',
+                    'canChangeCategory', 'canBeShutdowned'
+                ]
+            };
+            
+            const validValues = ['yes', 'no', 'user-defined'];
+            
+            for (let i = 0; i < lines.length; i++) {
+                const lineNum = i + 1;
+                let line = lines[i].trim();
+                
+                // Skip empty lines and comments
+                if (!line || line.startsWith(';') || line.startsWith('#')) continue;
+                
+                // Track current section
+                if (line.startsWith('[') && line.endsWith(']')) {
+                    currentSection = line.slice(1, -1);
+                    
+                    // Validate section name for access.ini
+                    if (currentFile === 'access' && validSections.access && 
+                        !validSections.access.includes(currentSection)) {
+                        warnings.push(`${t.lineCol} ${lineNum}: Section [${currentSection}] is not a standard ruTorrent access.ini section`);
+                    }
+                    continue;
+                }
+                
+                // All non-section, non-comment lines must have an assignment
+                if (!line.includes('=')) {
+                    errors.push(`${t.lineCol} ${lineNum}: Missing assignment operator "=" - INI format requires "key = value"`);
+                    continue;
+                }
+                
+                // Validate key=value pairs
+                if (line.includes('=')) {
+                    // Remove inline comments (;; or #)
+                    if (line.includes(';;')) {
+                        line = line.substring(0, line.indexOf(';;')).trim();
+                    } else if (line.includes('#')) {
+                        line = line.substring(0, line.indexOf('#')).trim();
+                    }
+                    
+                    const [key, value] = line.split('=').map(s => s.trim());
+                    
+                    if (key && value) {
+                        // Check if key is valid for ruTorrent
+                        const keyList = validKeys[currentFile] || [];
+                        if (keyList.length > 0 && !keyList.includes(key)) {
+                            warnings.push(`${t.lineCol} ${lineNum}: Key "${key}" is not a standard ruTorrent ${currentFile}.ini option`);
+                        }
+                        
+                        // Check if value is valid
+                        if (!validValues.includes(value.toLowerCase())) {
+                            warnings.push(`${t.lineCol} ${lineNum}: Value "${value}" should be one of: yes, no, user-defined`);
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Initialize
+        currentLang = detectLanguage();
+        updateUI();
+        updateLineInfo();
+        
+        // Keyboard shortcut: Ctrl+S to save
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                saveFileToServer();
+            }
+            // F4 → Open find dialog (Ctrl+F)
+            else if (e.key === 'F4' && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                e.preventDefault();
+                editor.execCommand('find');
+            }
+            // F3 → Find next
+            else if (e.key === 'F3' && !e.shiftKey) {
+                e.preventDefault();
+                editor.execCommand('findnext');
+            }
+            // Shift+F3 → Find previous
+            else if (e.key === 'F3' && e.shiftKey) {
+                e.preventDefault();
+                editor.execCommand('findprevious');
+            }
+        });
+        
+        // Auto-load file from server on startup
+        window.addEventListener('load', function() {
+            const params = new URLSearchParams(window.location.search);
+            const fileParam = params.get('file');
+            
+            // Detect file type from URL parameter
+            if (fileParam) {
+                // Extract basename from full path or use as-is if already basename
+                const basename = fileParam.includes('/') ? fileParam.split('/').pop() : fileParam;
+                
+                // Detect file type based on basename
+                if (basename === 'config.php') {
+                    currentFile = 'config';
+                } else if (basename === 'freetz_config.php') {
+                    currentFile = 'freetz_config';
+                } else if (basename === 'access.ini') {
+                    currentFile = 'access';
+                } else if (basename === 'plugins.ini') {
+                    currentFile = 'plugins';
+                }
+                
+                // Update dropdown to match detected file type
+                document.getElementById('fileType').value = currentFile;
+            }
+            
+            if (fileParam || window.location.pathname.startsWith('/rtorrent/') || window.location.pathname.includes('/usr/mww/')) {
+                // Load from server
+                switchFile(currentFile);
+            }
+        });
+        
+        // Load mock backend if in demo mode (but NOT in freetz-ng environment)
+        (function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const isFritzBox = window.location.pathname.startsWith('/rtorrent/') || 
+                               window.location.pathname.includes('/usr/mww/') ||
+                               window.location.hostname.includes('fritz');
+            
+            // Only activate demo mode if explicitly requested AND not in freetz-ng
+            if (urlParams.get('demo') === '1' && !isFritzBox) {
+                const script = document.createElement('script');
+                script.src = 'demo/mock-backend.js';
+                script.onerror = function() {
+                    // Try alternative path (if accessed from demo/ directory)
+                    script.src = 'mock-backend.js';
+                };
+                document.head.appendChild(script);
+                
+                // Auto-load sample file when mock backend is ready
+                window.addEventListener('mockBackendReady', function() {
+                    console.log('Mock backend ready, loading sample config...');
+                    loadFileFromServer();
+                });
+            }
+        })();
+        
+    </script>
+</body>
+</html>

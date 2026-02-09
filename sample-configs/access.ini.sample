@@ -1,0 +1,180 @@
+; ruTorrent Access Control Configuration (access.ini)
+; This file controls user permissions and UI element visibility
+; Sample configuration for demonstration and testing
+
+[options]
+; Allow users to view and modify options
+showDownloadsPage = yes
+showConnectionPage = yes
+showBitTorrentPage = yes
+showTransfersPage = yes
+showAdvancedPage = yes
+
+[tabs]
+; Tab management permissions
+canChangeOptions = yes
+canChangeTabs = yes
+
+[add]
+; Torrent adding permissions
+canAddTorrents = yes
+canAddTorrentsViaUpload = yes
+canAddTorrentsViaURL = yes
+canAddTorrentsViaTorrentFile = yes
+canAddTorrentsWithResume = yes
+canAddTorrentsWithRandomizeHash = no
+
+[remove]
+; Torrent removal permissions
+canRemoveTorrents = yes
+canRemoveData = yes
+canRemoveWithData = yes
+
+[labels]
+; Label management
+canChangeLabel = yes
+canCreateLabel = yes
+canDeleteLabel = yes
+
+[ui]
+; UI customization permissions
+canChangeToolbar = yes
+canChangeMenu = yes
+canChangeColumns = yes
+canChangeStatusBar = yes
+canChangeCategory = yes
+canChangeSorting = yes
+canChangeFiltering = yes
+
+[control]
+; Torrent control permissions
+canStartTorrents = yes
+canStopTorrents = yes
+canPauseTorrents = yes
+canSetPriority = yes
+canForceReannounce = yes
+canForceRecheck = yes
+
+[settings]
+; Settings modification
+canChangeGlobalSettings = yes
+canChangeDownloadDirectory = yes
+canChangeConnectionSettings = yes
+canChangeBandwidthSettings = yes
+
+[files]
+; File management
+canViewFiles = yes
+canSetFilePriority = yes
+canUnsetFilePriority = yes
+canDownloadFiles = yes
+
+[info]
+; Information display
+canViewGeneralInfo = yes
+canViewTrackers = yes
+canViewPeers = yes
+canViewFiles = yes
+canViewDetails = yes
+
+[trackers]
+; Tracker management
+canAddTrackers = yes
+canEditTrackers = yes
+canRemoveTrackers = yes
+canEnableTrackers = yes
+canDisableTrackers = yes
+
+[peers]
+; Peer management
+canViewPeerDetails = yes
+canBlockPeers = yes
+canKickPeers = yes
+
+[rss]
+; RSS feed management (if RSS plugin enabled)
+canAddFeeds = yes
+canEditFeeds = yes
+canRemoveFeeds = yes
+canAddFilters = yes
+canEditFilters = yes
+canRemoveFilters = yes
+
+[scheduler]
+; Scheduler management (if scheduler plugin enabled)
+canAddSchedules = yes
+canEditSchedules = yes
+canRemoveSchedules = yes
+canEnableSchedules = yes
+canDisableSchedules = yes
+
+[ratio]
+; Ratio control (if ratio plugin enabled)
+canSetRatioLimits = yes
+canViewRatioGroups = yes
+canCreateRatioGroups = yes
+canDeleteRatioGroups = yes
+
+[datadir]
+; Data directory management (if datadir plugin enabled)
+canChangeDataDir = yes
+canBrowseDataDir = yes
+
+[unpack]
+; Unpacking control (if unpack plugin enabled)
+canUnpack = yes
+canAutoUnpack = yes
+
+[create]
+; Torrent creation (if create plugin enabled)
+canCreateTorrents = yes
+canSetPrivateFlag = yes
+
+[extsearch]
+; External search (if extsearch plugin enabled)
+canUseExternalSearch = yes
+canAddSearchEngines = yes
+canEditSearchEngines = yes
+canRemoveSearchEngines = yes
+
+[history]
+; History plugin (if history plugin enabled)
+canViewHistory = yes
+canClearHistory = yes
+
+[diskspace]
+; Disk space display
+canViewDiskSpace = yes
+
+[throttle]
+; Bandwidth throttling (if throttle plugin enabled)
+canUseThrottle = yes
+canCreateThrottle = yes
+canEditThrottle = yes
+canDeleteThrottle = yes
+
+[loginmgr]
+; Login manager (if loginmgr plugin enabled)
+canManageLogins = yes
+canAddLogin = yes
+canEditLogin = yes
+canRemoveLogin = yes
+
+[retrackers]
+; Retrackers management (if retrackers plugin enabled)
+canUseRetrackers = yes
+canEditRetrackersList = yes
+
+[rpc]
+; RPC access control
+canUseRPC = yes
+canExecuteCommands = yes
+
+[advanced]
+; Advanced features
+canUseConsole = no
+canEditSourceCode = no
+canAccessSystemFiles = no
+canShutdownWebUI = no
+
+; === End of Configuration ===
