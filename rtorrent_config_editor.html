@@ -1135,6 +1135,13 @@
                 values: "Size in bytes. Can use suffixes: K (kilobytes), M (megabytes). Typical: 2M-8M.",
                 link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-network-send-buffer-size"
             },
+            "network.http.cacert.set": {
+                title: "network.http.cacert.set",
+                description: "Set path to a PEM-format CA certificate bundle used to verify HTTPS tracker and peer connections. Enables certificate validation for secure downloads.",
+                syntax: "network.http.cacert.set = \"/path/to/ca-bundle.crt\"",
+                values: "Path to PEM CA bundle. Example: \"/etc/ssl/certs/ca-bundle.crt\". Use with network.http.ssl_verify_peer.set = yes.",
+                link: "https://rtorrent-docs.readthedocs.io/en/latest/cmd-ref.html#term-network-http-cacert"
+            },
             "network.scgi.open_local": {
                 title: "network.scgi.open_local",
                 description: "Open a UNIX socket for SCGI/XMLRPC communication. Used by web interfaces like ruTorrent.",
@@ -1416,6 +1423,7 @@
                     "network.max_open_sockets.set", "network.xmlrpc.size_limit.set",
                     "network.http.dns_cache_timeout.set", "network.http.capath.set",
                     "network.http.ssl_verify_peer.set", "network.http.ssl_verify_host.set",
+                    "network.http.cacert.set",
                     "network.scgi.open_local", "network.scgi.open_port", "network.scgi.dont_route",
                     "network.rpc.use_xmlrpc.set", "network.rpc.use_jsonrpc.set",
                     "network.listen.backlog.set", "network.open_files", "network.open_sockets",
@@ -1573,6 +1581,7 @@
                     {caption: "network.scgi.open_local", value: "network.scgi.open_local = (cat, (session.path), rpc.socket)", meta: "Open SCGI socket", score: 1000},
                     {caption: "network.scgi.open_port", value: "network.scgi.open_port = 127.0.0.1:5000", meta: "Open SCGI TCP port", score: 900},
                     {caption: "network.http.max_open.set", value: "network.http.max_open.set = 50", meta: "Max open HTTP connections", score: 800},
+                    {caption: "network.http.cacert.set", value: "network.http.cacert.set = \"/etc/ssl/certs/ca-bundle.crt\"", meta: "Path to CA certificate bundle for HTTPS verification", score: 900},
                     {caption: "network.max_open_files.set", value: "network.max_open_files.set = 600", meta: "Max open files", score: 900},
                     {caption: "network.max_open_sockets.set", value: "network.max_open_sockets.set = 300", meta: "Max open sockets", score: 900},
                     
@@ -2534,7 +2543,7 @@ method.set_key = event.download.finished, action_name, "command_to_execute"
             
             const rtorrentCommands = [
                 "method.insert", "method.set", "session.path.set", "directory.default.set",
-                "network.port_range.set", "network.port_random.set", "network.http.max_open.set",
+                "network.port_range.set", "network.port_random.set", "network.http.max_open.set", "network.http.cacert.set",
                 "network.bind_address.set", "network.receive_buffer.size", "network.receive_buffer.size.set",
                 "network.send_buffer.size", "network.send_buffer.size.set",
                 "dht.mode.set", "protocol.pex.set", "throttle.max_uploads.set",
