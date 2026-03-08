@@ -2483,7 +2483,7 @@ method.set_key = event.download.finished, action_name, "command_to_execute"
         function downloadConfig() {
             // Check if we're on FritzBox (has file parameter or running from /usr/mww/)
             const filePath = getFilePathFromURL();
-            if (filePath || window.location.pathname.includes('/usr/mww/')) {
+            if (filePath || window.location.protocol !== 'file:') {
                 // Save to server
                 saveFileToServer();
             } else {
@@ -2709,7 +2709,7 @@ method.set_key = event.download.finished, action_name, "command_to_execute"
             updateUI();
             // Auto-load file - if no file parameter, use .rtorrent.rc as default
             const filePath = getFilePathFromURL();
-            if (filePath || window.location.pathname.includes('/usr/mww/') || window.location.pathname.includes('/rtorrent/')) {
+            if (filePath || window.location.protocol !== 'file:') {
                 // We're on FritzBox - load the file (.rtorrent.rc if no parameter specified)
                 loadFileFromServer();
             }
@@ -2723,7 +2723,7 @@ method.set_key = event.download.finished, action_name, "command_to_execute"
             updateUI();
             // Auto-load file - if no file parameter, use .rtorrent.rc as default
             const filePath = getFilePathFromURL();
-            if (filePath || window.location.pathname.includes('/usr/mww/') || window.location.pathname.includes('/rtorrent/')) {
+            if (filePath || window.location.protocol !== 'file:') {
                 // We're on FritzBox - load the file (.rtorrent.rc if no parameter specified)
                 loadFileFromServer();
             }
@@ -2732,9 +2732,7 @@ method.set_key = event.download.finished, action_name, "command_to_execute"
         // Load mock backend if in demo mode (but NOT in freetz-ng environment)
         (function() {
             const urlParams = new URLSearchParams(window.location.search);
-            const isFritzBox = window.location.pathname.includes('/usr/mww/') || 
-                               window.location.pathname.includes('/rtorrent/') ||
-                               window.location.hostname.includes('fritz');
+            const isFritzBox = window.location.protocol !== 'file:';
             
             // Only activate demo mode if explicitly requested AND not in freetz-ng
             if (urlParams.get('demo') === '1' && !isFritzBox) {
