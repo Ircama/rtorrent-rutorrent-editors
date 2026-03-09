@@ -1214,9 +1214,15 @@ $scgi_host = "127.0.0.1";
             const params = new URLSearchParams(window.location.search);
             const pathParam = params.get('path');
             
-            // If path parameter provided, use it
+            // If path parameter provided, use it — but only if it looks like
+            // a directory, not a file path (e.g. proxied via freetz_proxy where
+            // ?path=/rtorrent/rutorrent_config_editor.html is the navigation path,
+            // not the conf directory).
             if (pathParam) {
-                return pathParam.replace(/\/$/, ''); // Remove trailing slash
+                const lastSegment = pathParam.split('/').pop();
+                if (!lastSegment.includes('.')) {
+                    return pathParam.replace(/\/$/, ''); // Remove trailing slash
+                }
             }
             
             // Auto-detect: check for externalized installation first
